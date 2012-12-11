@@ -1,0 +1,27 @@
+{
+  "configuration": {
+    "status": "off",
+    "properties": {
+      "property": { "name": "filename", "value": "target/trace.log" }
+    },
+    "appenders": {
+      "Console": {
+        "name": "CONSOLE",
+        "target": "SYSTEM_OUT",
+        "PatternLayout": { "pattern": "%d{HH:mm:ss.SSS} %highlight{%-5level %class{1}#%M - %msg%xEx%n}" }
+      },
+      "File": {
+        "name": "LOG",
+        "fileName": "${filename}",
+        "append": "false",
+        "PatternLayout": { "pattern": "%d{HH:mm:ss.SSS} %-5level %class{1}#%M [%L] - %msg%xEx%n" }
+      }
+    },
+    "loggers": {
+      "root": { 
+        "level": "trace",
+        "appender-ref": { "ref": "LOG" }
+      }
+    }
+  }
+}
