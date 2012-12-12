@@ -23,6 +23,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
@@ -54,33 +57,15 @@ public class FileMgr implements IFileMgr {
 
 
   public FileMgr() {
-    fileIndex = new FileIndex();
+    ConfigFactory.invalidateCaches();
+    Config conf = ConfigFactory.load();
+
+    localNodeId   = conf.getString( "nodeId" );
+    pubFolderPath = conf.getString( "pubFolderPath" );
+    pubFolderURI  = conf.getString( "pubFolderURI" );
+    fileIndex     = new FileIndex();
   }
 
-
-  /* (non-Javadoc)
-   * @see org.coderebels.tsaenode.core.file.IFileMgr#setNodeId(java.lang.String)
-   */
-  @Override
-  public void setNodeId(String nodeId) {
-    this.localNodeId = nodeId;
-  }
-
-  /* (non-Javadoc)
-   * @see org.coderebels.tsaenode.core.file.IFileMgr#setPubFolderPath(java.lang.String)
-   */
-  @Override
-  public void setPubFolderPath(String path) {
-    this.pubFolderPath = path;
-  }
-
-  /* (non-Javadoc)
-   * @see org.coderebels.tsaenode.core.file.IFileMgr#setPubFolderURI(java.lang.String)
-   */
-  @Override
-  public void setPubFolderURI(String uri) {
-    this.pubFolderURI = uri;
-  }
 
   /* (non-Javadoc)
    * @see org.coderebels.tsaenode.core.file.IFileMgr#createFileData(java.lang.String)
@@ -88,7 +73,7 @@ public class FileMgr implements IFileMgr {
   @Override
   public FileData createFileData(String file) {
     logger.entry( file );
-    logger.info( "Creating file data..." );
+    logger.debug( "Creating file data..." );
     /*
      * 1) Create new FileData instance --> FileDataFactory.createFileData
      */
@@ -103,7 +88,7 @@ public class FileMgr implements IFileMgr {
   @Override
   public FileData searchFileData(String file) throws Exception {
     logger.entry( file );
-    logger.info( "Searching file data..." );
+    logger.debug( "Searching file data..." );
     /*
      * 1) Search for file in FileIndex and return the corresponding FileData
      *    or null if not found
@@ -119,7 +104,7 @@ public class FileMgr implements IFileMgr {
   @Override
   public boolean addFile(FileData file) throws FileMgrException {
     logger.entry( file );
-    logger.info( "Adding file..." );
+    logger.debug( "Adding file..." );
     /*
      * 1) If file belongs to local node --> file.timestamp.nodeId == this.localNodeId
      * 1.1) Add file to publication folder --> FileMgr.doAddFile
@@ -144,7 +129,7 @@ public class FileMgr implements IFileMgr {
     } catch (Exception e) {
       done = false;
       String mesg = String.format( "An error occurred while adding the file -> %s", file );
-      String method = String.format( "FileMgr.addFile( %s )", file );
+      String method = String.format( "FileMgr#addFile( %s )", file );
       throw new FileMgrException( mesg, method, e );
     }
 
@@ -157,7 +142,7 @@ public class FileMgr implements IFileMgr {
   @Override
   public boolean removeFile(FileData file) throws FileMgrException {
     logger.entry( file );
-    logger.info( "Removing file..." );
+    logger.debug( "Removing file..." );
     /*
      * 1) Check the file belongs to the local node --> file.timestamp.nodeId == this.localNodeId
      * 2) If true
@@ -178,7 +163,7 @@ public class FileMgr implements IFileMgr {
     } catch (Exception e) {
       done = false;
       String mesg = String.format( "An error occurred while removing the file -> %s", file );
-      String method = String.format( "FileMgr.removeFile( %s )", file );
+      String method = String.format( "FileMgr#removeFile( %s )", file );
       throw new FileMgrException( mesg, method, e );
     }
 
@@ -191,7 +176,7 @@ public class FileMgr implements IFileMgr {
   @Override
   public List<FileData> getFileIndex() {
     logger.entry();
-    logger.info( "Retrieving file index..." );
+    logger.debug( "Retrieving file index..." );
 
     List<FileData> index = fileIndex.getData();
 
@@ -216,7 +201,7 @@ public class FileMgr implements IFileMgr {
 
     if (!fin.exists()) {
       String mesg   = String.format( "The file to add does not exist -> %s", file );
-      String method = String.format( "FileMgr.doAddFile( %s )", file );
+      String method = String.format( "FileMgr#doAddFile( %s )", file );
       throw new FileMgrException( mesg, method );
     }
 
@@ -249,7 +234,7 @@ public class FileMgr implements IFileMgr {
 
     if (!f.exists()) {
       String mesg   = String.format( "The file to delete does not exist -> %s", file);
-      String method = String.format( "FileMgr.doRemoveFile( %s )", file );
+      String method = String.format( "FileMgr#doRemoveFile( %s )", file );
       throw new FileMgrException( mesg, method );
     }
 

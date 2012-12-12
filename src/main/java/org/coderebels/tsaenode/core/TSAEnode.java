@@ -17,20 +17,20 @@
 
 package org.coderebels.tsaenode.core;
 
-import java.util.List;
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.net.MalformedURLException;
-
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
+import java.util.List;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigException;
+
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import org.coderebels.tsaenode.core.file.FileData;
 import org.coderebels.tsaenode.core.file.IFileMgr;
@@ -46,12 +46,12 @@ import org.coderebels.tsaenode.core.exception.AXCBaseException;
  */
 public class TSAEnode extends UnicastRemoteObject implements INode {
 
-  private static Config conf   = ConfigFactory.load();
   private static Logger logger = LogManager.getLogger( TSAEnode.class.getName() );
 
   private final Object lock = new Object();
 
-  private String hostaddress;
+  private String nodeId;
+  private String nodeIP;
   private String nodePort;
   private String rmiPort;
   private String pubFolderPath;
@@ -60,30 +60,25 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
   private IOperationMgr operationMgr;
 
 
-  public TSAEnode() throws RemoteException {
+  public TSAEnode() throws RemoteException, UnknownHostException, ConfigException {
     super();
 
-    hostaddress = "127.0.0.1";
-    try {
-      hostaddress = InetAddress.getLocalHost().getHostAddress();
-    } catch (Exception e) {
-      logger.catching( e );
-    }
+    Config conf = ConfigFactory.load();
 
+    nodeIP   = InetAddress.getLocalHost().getHostAddress();
     nodePort = conf.getString( "nodePort" );
+    nodeId   = String.format( "%s:%s", nodeIP, nodePort );
     rmiPort  = conf.getString( "rmiPort" );
-    pubFolderPath = conf.getString( "pubFolder" ) + File.separator + nodePort;
+    pubFolderPath = conf.getString( "pubFolderPath" );
 
-    String nodeId = String.format( "%s:%s", hostaddress, nodePort );
-    String pubFolderURI  = String.format( "http://%s%s/", hostaddress, pubFolderPath );
+    String pubFolderURI  = String.format( "http://%s/tsaenode/%s", nodeIP, nodePort );
+
+    System.setProperty( "nodeId", nodeId );
+    System.setProperty( "pubFolderPath", pubFolderPath );
+    System.setProperty( "pubFolderURI", pubFolderURI );
 
     fileMgr = new FileMgr();
-    fileMgr.setNodeId( nodeId );
-    fileMgr.setPubFolderPath( pubFolderPath );
-    fileMgr.setPubFolderURI( pubFolderURI );
-
     operationMgr = new OperationMgr( fileMgr );
-    operationMgr.setNodeId( nodeId );
   }
 
 
@@ -171,7 +166,7 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
       if(!pubFolder.exists()) pubFolder.mkdirs();
 
       for(File file : pubFolder.listFiles()) {
-        done = done && add( file.getAbsolutePath() );
+        done = done && applyOperation( Operation.ADD, file.getAbsolutePath() );
       }
     } catch (Exception e) {
       done = false;

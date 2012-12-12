@@ -28,12 +28,6 @@ import org.coderebels.tsaenode.core.exception.OperationMgrException;
 public interface IOperationMgr {
 
   /**
-   * Sets the local node identifier
-   * @param nodeId Identifier of the local node
-   */
-  public void setNodeId(String nodeId);
-
-  /**
    * Creates an operation instance of the specified type
    * @param type Type of operation
    * @param file File the operation will apply to

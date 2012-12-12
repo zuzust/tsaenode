@@ -55,7 +55,7 @@ public class FileData implements Serializable {
 
   @Override
   public String toString() {
-    return String.format( "File[%s,%s]", timestamp.toShortString(), path );
+    return String.format( "File[%s,%s]", timestamp.toShortString(), uri );
   }
 
   @Override

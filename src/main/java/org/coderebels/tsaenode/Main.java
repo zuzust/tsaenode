@@ -140,7 +140,7 @@ public class Main {
   }
 
   private String readFilename() throws Exception {
-    System.out.println("Enter the name of the file:");
+    System.out.println("Enter the absolute path of the file:");
     return read();
   }
 
@@ -150,12 +150,16 @@ public class Main {
     switch (action) {
       case 1: addFile( node );
         break;
+
       case 2: removeFile( node );
         break;
+
       case 3: showIndex( node );
         break;
+
       case 4: showLog( node );
         break;
+
       default: exit = true;
         break;
     }

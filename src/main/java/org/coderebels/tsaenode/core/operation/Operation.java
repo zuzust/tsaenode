@@ -66,7 +66,7 @@ public class Operation implements Serializable {
         type = "unknown";
     }
 
-    return String.format( "Operation[%s,%s,%s]", timestamp.toShortString(), type, file.getPath() );
+    return String.format( "Operation[%s,%s,%s]", timestamp.toShortString(), type, file.getURI() );
   }
 
   @Override

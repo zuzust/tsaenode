@@ -1,6 +1,8 @@
 
+=================================
+File Index: [Owner Filename URI]
 ---------------------------------
 #foreach( $file in $files )
-$file
+${file.owner}    ${file.filename}    ${file.getURI()}
 #end
----------------------------------
+=================================

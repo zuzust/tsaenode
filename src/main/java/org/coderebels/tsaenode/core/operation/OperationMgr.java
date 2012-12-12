@@ -19,6 +19,9 @@ package org.coderebels.tsaenode.core.operation;
 
 import java.util.List;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
@@ -55,6 +58,10 @@ public class OperationMgr implements IOperationMgr {
 
 
   public OperationMgr(IFileMgr fileMgr) {
+    ConfigFactory.invalidateCaches();
+    Config conf = ConfigFactory.load();
+
+    this.localNodeId = conf.getString( "nodeId" );
     this.fileMgr = fileMgr;
     this.log     = new Log();
     this.summary = new Summary();
@@ -62,20 +69,12 @@ public class OperationMgr implements IOperationMgr {
 
 
   /* (non-Javadoc)
-   * @see org.coderebels.tsaenode.core.operation.IOperationMgr#setNodeId(java.lang.String)
-   */
-  @Override
-  public void setNodeId(String nodeId) {
-    this.localNodeId = nodeId;
-  }
-
-  /* (non-Javadoc)
    * @see org.coderebels.tsaenode.core.operation.IOperationMgr#createOperation(java.lang.Integer, java.lang.String)
    */
   @Override
   public Operation createOperation(int type, String file) throws OperationMgrException {
     logger.entry( type, file );
-    logger.info( "Creating operation..." );
+    logger.debug( "Creating operation..." );
     /*
      * 1) If type = ADD --> IFileMgr.createFileData
      *    If type = REMOVE --> IFileMgr.searchFileData
@@ -90,12 +89,13 @@ public class OperationMgr implements IOperationMgr {
         case Operation.ADD:
           fd = fileMgr.createFileData( file );
           break;
+
         case Operation.REMOVE:
           fd = fileMgr.searchFileData( file );
 
           if (fd == null) {
             String mesg   = String.format( "Unable to create the operation: the file doesn't exist -> %s", file );
-            String method = String.format( "OperationMgr.createOperation( %1$d, %2$s )", type, file );
+            String method = String.format( "OperationMgr#createOperation( %1$d, %2$s )", type, file );
             throw new InvalidOperationTargetException( mesg, method );
           }
           break;
@@ -105,7 +105,7 @@ public class OperationMgr implements IOperationMgr {
     } catch (Exception e) {
       op = null;
       String mesg   = String.format( "An error occurred while creating the operation" );
-      String method = String.format( "OperationMgr.createOperation( %1$d, %2$s )", type, file );
+      String method = String.format( "OperationMgr#createOperation( %1$d, %2$s )", type, file );
       throw new OperationMgrException( mesg, method, e );
     }
 
@@ -118,7 +118,7 @@ public class OperationMgr implements IOperationMgr {
   @Override
   public synchronized boolean executeOperation(Operation op) throws OperationMgrException {
     logger.entry( op );
-    logger.info( "Executing operation..." );
+    logger.debug( "Executing operation..." );
     /*
      * 1) If op = ADD --> IFileMgr.addFile
      *    If op = REMOVE --> IFileMgr.removeFile
@@ -146,7 +146,7 @@ public class OperationMgr implements IOperationMgr {
 
             if (!creator.equals(owner)) {
               String mesg   = String.format( "Unable to execute the remove operation: the file belongs to another user -> %s", file );
-              String method = String.format( "OperationMgr.executeOperation( %s )", op );
+              String method = String.format( "OperationMgr#executeOperation( %s )", op );
               throw new InvalidOperationTargetException( mesg, method );
             }
 
@@ -162,7 +162,7 @@ public class OperationMgr implements IOperationMgr {
     } catch (Exception e) {
       done = false;
       String mesg   = String.format( "An error occurred while executing the operation -> %s", op );
-      String method = String.format( "OperationMgr.executeOperation( %s )", op );
+      String method = String.format( "OperationMgr#executeOperation( %s )", op );
       throw new OperationMgrException( mesg, method, e );
     }
 
@@ -175,7 +175,7 @@ public class OperationMgr implements IOperationMgr {
   @Override
   public List<Operation> getLog() {
     logger.entry();
-    logger.info( "Retrieving operation log..." );
+    logger.debug( "Retrieving operation log..." );
 
     List<Operation> ops = log.getData();
 

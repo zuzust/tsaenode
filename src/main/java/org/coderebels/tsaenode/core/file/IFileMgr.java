@@ -28,24 +28,6 @@ import org.coderebels.tsaenode.core.exception.FileMgrException;
 public interface IFileMgr {
 
   /**
-   * Sets the local node identifier
-   * @param nodeId Identifier of the local node
-   */
-  public void setNodeId(String nodeId);
-
-  /**
-   * Sets the publication folder path in local node
-   * @param path Publication folder path in local node
-   */
-  public void setPubFolderPath(String path);
-
-  /**
-   * Sets the publication folder URI in local node
-   * @param uri Publication folder URI in local node
-   */
-  public void setPubFolderURI(String uri);
-
-  /**
    * Creates a file metadata instance from the specified file
    * @param file File from which metadata is created
    * @return Metadata instance from file

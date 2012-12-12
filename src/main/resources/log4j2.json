@@ -8,10 +8,11 @@
       "Console": {
         "name": "CONSOLE",
         "target": "SYSTEM_OUT",
+        "ThresholdFilter": { "level": "INFO" },
         "PatternLayout": { "pattern": "%d{HH:mm:ss.SSS} %highlight{%-5level %class{1}#%M - %msg%xEx%n}" }
       },
       "File": {
-        "name": "LOG",
+        "name": "FILE",
         "fileName": "${filename}",
         "append": "false",
         "PatternLayout": { "pattern": "%d{HH:mm:ss.SSS} %-5level %class{1}#%M [%L] - %msg%xEx%n" }
@@ -20,7 +21,7 @@
     "loggers": {
       "root": { 
         "level": "trace",
-        "appender-ref": { "ref": "LOG" }
+        "appender-ref": { "ref": "FILE" }
       }
     }
   }
