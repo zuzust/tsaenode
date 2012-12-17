@@ -28,12 +28,12 @@ import org.apache.logging.log4j.LogManager;
 /**
  * @author carles.ml.dev@gmail.com (Carles Muiños)
  */
-public class UnicastSyncPolicy implements ISyncPolicy {
+public class MulticastSyncPolicy implements ISyncPolicy {
 
-  private static Logger logger = LogManager.getLogger( UnicastSyncPolicy.class.getName() );
+  private static Logger logger = LogManager.getLogger( MulticastSyncPolicy.class.getName() );
 
 
-  public UnicastSyncPolicy() {}
+  public MulticastSyncPolicy() {}
 
 
   /* (non-Javadoc)
@@ -45,18 +45,19 @@ public class UnicastSyncPolicy implements ISyncPolicy {
     logger.entry();
     logger.debug( "Selecting nodes to synchronize with..." );
     /*
-     * 1) Select randomly a peer available for synchronization
-     * 2) Return a list of nodes containing the selected peer only
+     * 1) Select randomly a subset of peers available for synchronization: [ log_2(nodes.size) + 1 ] --> [ ( log_e(nodes.size) / log_e(2) ) + 1 ]
+     * 2) Return a list of nodes containing the selected peers
      */
     List<Node> syncNodes = new Vector<Node>();
 
     boolean connected = false;
-    boolean synchronizing = true;
+    boolean synchronizing = false;
 
     int idx = 0;
     int n = nodes.size();
     int numSyncNodes = (int) Math.round( (Math.log(n) / Math.log(2)) + 1 );
     int attempts = (int) Math.floor( numSyncNodes * 1.5 );
+    int addedNodes = 0;
 
     Node node = null;
     Random rnd = new Random();
@@ -68,11 +69,14 @@ public class UnicastSyncPolicy implements ISyncPolicy {
       connected = node.isConnected();
       synchronizing = !syncMap.isAvailable( node );
 
-      attempts--;
-    } while ((!connected || synchronizing) && attempts > 0);
+      if (connected && !synchronizing) {
+        syncMap.setUnavailable( node );
+        syncNodes.add( node );
+        addedNodes++;
+      }
 
-    syncMap.setUnavailable( node );
-    syncNodes.add( node );
+      attempts--;
+    } while (addedNodes < numSyncNodes && attempts > 0);
 
     return logger.exit( syncNodes );
   }

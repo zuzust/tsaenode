@@ -34,6 +34,15 @@ public class SyncPolicyFactory {
     switch (policy) {
       case 1: syncPolicy = new UnicastSyncPolicy();
         break;
+
+      case 2: syncPolicy = new MulticastSyncPolicy();
+        break;
+
+      case 3: syncPolicy = new BroadcastSyncPolicy();
+        break;
+
+      default: syncPolicy = new MulticastSyncPolicy();
+        break;
     }
 
     return syncPolicy;

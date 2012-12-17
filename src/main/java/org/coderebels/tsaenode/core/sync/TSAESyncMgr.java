@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigException;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -65,7 +66,7 @@ public class TSAESyncMgr implements ISyncMgr {
   private IOperationMgr operationMgr;
 
 
-  public TSAESyncMgr(IOperationMgr operationMgr) {
+  public TSAESyncMgr(IOperationMgr operationMgr) throws ConfigException {
     ConfigFactory.invalidateCaches();
     Config conf = ConfigFactory.load();
 
@@ -148,8 +149,9 @@ public class TSAESyncMgr implements ISyncMgr {
    * Indexes the member nodes of the group
    * @param conf Config settings
    * @return List of nodes of the group
+   * @throws com.typesafe.config.ConfigException
    */
-  private List<Node> setUpGroup(Config conf) {
+  private List<Node> setUpGroup(Config conf) throws ConfigException {
     logger.entry();
     logger.debug( "Indexing group..." );
 
