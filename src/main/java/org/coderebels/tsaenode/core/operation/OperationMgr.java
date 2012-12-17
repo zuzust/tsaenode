@@ -17,7 +17,10 @@
 
 package org.coderebels.tsaenode.core.operation;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -27,6 +30,7 @@ import org.apache.logging.log4j.LogManager;
 
 import org.coderebels.tsaenode.core.common.Timestamp;
 import org.coderebels.tsaenode.core.common.Summary;
+import org.coderebels.tsaenode.core.common.AckSummary;
 import org.coderebels.tsaenode.core.file.FileData;
 import org.coderebels.tsaenode.core.file.IFileMgr;
 import org.coderebels.tsaenode.core.exception.InvalidOperationTargetException;
@@ -55,6 +59,10 @@ public class OperationMgr implements IOperationMgr {
    * Summary vector of local node
    */
   private Summary summary;
+  /**
+   * Acknowledgement vector of local node
+   */
+  private AckSummary ackSummary;
 
 
   public OperationMgr(IFileMgr fileMgr) {
@@ -65,6 +73,7 @@ public class OperationMgr implements IOperationMgr {
     this.fileMgr = fileMgr;
     this.log     = new Log();
     this.summary = new Summary();
+    this.ackSummary = new AckSummary();
   }
 
 
@@ -76,8 +85,8 @@ public class OperationMgr implements IOperationMgr {
     logger.entry( type, file );
     logger.debug( "Creating operation..." );
     /*
-     * 1) If type = ADD --> IFileMgr.createFileData
-     *    If type = REMOVE --> IFileMgr.searchFileData
+     * 1) If type = ADD --> IFileMgr#createFileData
+     *    If type = REMOVE --> IFileMgr#searchFileData
      * 2) Create new Operation --> OperationFactory.createOperation
      */
     Operation op = null;
@@ -120,8 +129,8 @@ public class OperationMgr implements IOperationMgr {
     logger.entry( op );
     logger.debug( "Executing operation..." );
     /*
-     * 1) If op = ADD --> IFileMgr.addFile
-     *    If op = REMOVE --> IFileMgr.removeFile
+     * 1) If op = ADD --> IFileMgr#addFile
+     *    If op = REMOVE --> IFileMgr#removeFile
      * 2) Add operation to Log
      * 3) Update Summary
      * 4) Return true if done successfully
@@ -170,6 +179,61 @@ public class OperationMgr implements IOperationMgr {
   }
 
   /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.operation.IOperationMgr#extractOperations(java.util.concurrent.ConcurrentHashMap)
+   */
+  @Override
+  public List<Operation> extractOperations(ConcurrentHashMap<String, Timestamp> sum) {
+    logger.entry( sum );
+    logger.debug( "Retrieving unknown operations..." );
+    /*
+     * 1) For each node in local summary
+     * 1.1) If timestamp (last) is newer than its counterpart in the fellow summary (peerLast)
+     * 1.1.1) Extract from Log the list of operations between last and peerLast(not included) of the corresponding node --> Log#extract
+     * 1.1.2) Add that list to the final list of operations to send --> Vector#addAll
+     * 2) Return the final list of operations not seen by fellow node
+     */
+    List<Operation> opsToSend = new Vector<Operation>();
+    Summary peerSummary = new Summary( sum );
+
+    for (String nodeId : summary.summarizedNodes()) {
+      Timestamp last     = summary.getLast( nodeId );
+      Timestamp peerLast = peerSummary.getLast( nodeId );
+      //
+      // Keep in mind the scenario where the remote fellow node is not aware of operations
+      // executed by other nodes --> peerLast == null
+      //
+      if (peerLast == null || peerLast.compare( last ) < 0) {
+        Timestamp first = peerLast;
+        boolean incFirst = false;
+
+        if (peerLast == null) {
+          Operation firstOp = log.getFirst( nodeId );
+          first = firstOp.getTimestamp();
+          incFirst = true;
+        }
+
+        List<Operation> nodeOps = log.extract( nodeId, first, last, incFirst );
+        opsToSend.addAll( nodeOps );
+      }
+    }
+
+    return logger.exit( opsToSend );
+  }
+
+  /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.operation.IOperationMgr#getSummary()
+   */
+  @Override
+  public ConcurrentHashMap<String, Timestamp> getSummary() {
+    logger.entry();
+    logger.debug( "Retrieving summary vector..." );
+
+    ConcurrentHashMap<String, Timestamp> sumData = summary.getData();
+
+    return logger.exit( sumData );
+  }
+
+  /* (non-Javadoc)
    * @see org.coderebels.tsaenode.core.operation.IOperationMgr#getLog()
    */
   @Override
@@ -180,6 +244,64 @@ public class OperationMgr implements IOperationMgr {
     List<Operation> ops = log.getData();
 
     return logger.exit( ops );
+  }
+
+  /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.operation.IOperationMgr#updateLog(java.util.List)
+   */
+  @Override
+  public boolean updateLog(List<Operation> ops) throws OperationMgrException {
+    logger.entry( ops );
+    logger.debug( "Updating operation log..." );
+    /*
+     * 1) For each op in ops
+     * 1.1) Execute operation --> IOperationMgr#executeOperation
+     * 2) Return true if done successfully
+     */
+    boolean done = true;
+
+    try {
+      Operation op = null;
+      Iterator<Operation> it = ops.iterator();
+
+      while (done && it.hasNext()) {
+        op = it.next();
+        done = executeOperation( op );
+      }
+    } catch (Exception e) {
+      done = false;
+      String mesg   = String.format( "An error occurred while updating the operation log" );
+      String method = String.format( "OperationMgr#updateLog( %s )", ops );
+      throw new OperationMgrException( mesg, method, e );
+    }
+
+    return logger.exit( done );
+  }
+
+  /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.operation.IOperationMgr#getAcks()
+   */
+  @Override
+  public ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> getAcks() {
+    logger.entry();
+    logger.debug( "Retrieving acknowledgement vector..." );
+
+    ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> ackData = ackSummary.getData();
+
+    return logger.exit( ackData );
+  }
+
+  /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.operation.IOperationMgr#updateAcks(java.util.concurrent.ConcurrentHashMap)
+   */
+  @Override
+  public boolean updateAcks(ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> acks) {
+    logger.entry( acks );
+    logger.debug( "Updating acknowledgement vector..." );
+
+    ackSummary.update( acks );
+
+    return logger.exit( true );
   }
 
 

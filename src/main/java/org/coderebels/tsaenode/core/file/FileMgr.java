@@ -107,7 +107,7 @@ public class FileMgr implements IFileMgr {
     logger.debug( "Adding file..." );
     /*
      * 1) If file belongs to local node --> file.timestamp.nodeId == this.localNodeId
-     * 1.1) Add file to publication folder --> FileMgr.doAddFile
+     * 1.1) Add file to publication folder --> FileMgr#doAddFile
      * 2) Update file index adding the passed in FileData instance
      * 3) Return true if done successfully
      */
@@ -146,7 +146,7 @@ public class FileMgr implements IFileMgr {
     /*
      * 1) Check the file belongs to the local node --> file.timestamp.nodeId == this.localNodeId
      * 2) If true
-     * 2.1) Delete the file from the publication folder --> FileMgr.doRemoveFile
+     * 2.1) Delete the file from the publication folder --> FileMgr#doRemoveFile
      * 3) Update file index removing the passed in FileData instance
      * 4) Return true if done successfully
      */
@@ -196,8 +196,7 @@ public class FileMgr implements IFileMgr {
     /*
      * 1) Copy file to local publication folder
      */
-    String pathToFile = file.getPath();
-    File fin = new File( pathToFile );
+    File fin = new File( file.getPath() );
 
     if (!fin.exists()) {
       String mesg   = String.format( "The file to add does not exist -> %s", file );
@@ -205,7 +204,7 @@ public class FileMgr implements IFileMgr {
       throw new FileMgrException( mesg, method );
     }
 
-    String newPathToFile = pubFolderPath + File.separator + basename( pathToFile );
+    String newPathToFile = pubFolderPath + File.separator + basename( file.getPath() );
     File fout = new File( newPathToFile );
 
     if (!fout.exists()) {
@@ -229,8 +228,7 @@ public class FileMgr implements IFileMgr {
      */
     boolean done = false;
 
-    String pathToFile = pubFolderPath + File.separator + file.getFilename();
-    File f = new File( pathToFile );
+    File f = new File( file.getPath() );
 
     if (!f.exists()) {
       String mesg   = String.format( "The file to delete does not exist -> %s", file);

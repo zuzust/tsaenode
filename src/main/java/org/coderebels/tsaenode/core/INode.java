@@ -20,7 +20,9 @@ package org.coderebels.tsaenode.core;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.coderebels.tsaenode.core.common.Timestamp;
 import org.coderebels.tsaenode.core.file.FileData;
 import org.coderebels.tsaenode.core.operation.Operation;
 
@@ -29,6 +31,13 @@ import org.coderebels.tsaenode.core.operation.Operation;
  * @author carles.ml.dev@gmail.com (Carles Muiños)
  */
 public interface INode extends Remote {
+
+  /**
+   * Sets up node data structures and joins the group of nodes
+   * @return true if done successfully; false otherwise
+   * @throws java.rmi.RemoteException
+   */
+  public boolean connect() throws RemoteException;
 
   /**
    * Adds a file to publication folder, becoming shareable within the group
@@ -59,5 +68,38 @@ public interface INode extends Remote {
    * @throws java.rmi.RemoteException
    */
   public List<Operation> getOperationLog() throws RemoteException;
+
+  /**
+   * Starts a new synchronization session
+   */
+  public boolean startTSAESession() throws RemoteException;
+
+  /**
+   * Takes necessary actions to get the node synchronized
+   * @param ops List of operations to be executed by node
+   * @param summary Summary vector of fellow node with whom synchronization session is established
+   * @param acks Acknowledgement vector of fellow node with whom synchronization session is established
+   * @return List of operations not known by fellow node with whom synchronization session is established
+   * @throws java.rmi.RemoteException
+   */
+  public List<Operation> performTSAESession(List<Operation> ops,
+                        ConcurrentHashMap<String, Timestamp> summary,
+                        ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> acks)
+    throws RemoteException;
+
+  /**
+   * Gets the summary vector of the node
+   * @return Summary vector of node
+   * @throws java.rmi.RemoteException
+   */
+  public ConcurrentHashMap<String, Timestamp> requestSummaryTSAESession() throws RemoteException;
+
+  /**
+   * Gets the acknowledgement vector of the node
+   * @return Acknowledgement vector of node
+   * @throws java.rmi.RemoteException
+   */
+  public ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> requestAckTSAESession()
+    throws RemoteException;
 
 }

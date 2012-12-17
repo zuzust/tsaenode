@@ -20,10 +20,12 @@ package org.coderebels.tsaenode.core;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.rmi.Naming;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -32,13 +34,15 @@ import com.typesafe.config.ConfigException;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
+import org.coderebels.tsaenode.core.common.Timestamp;
 import org.coderebels.tsaenode.core.file.FileData;
 import org.coderebels.tsaenode.core.file.IFileMgr;
 import org.coderebels.tsaenode.core.file.FileMgr;
 import org.coderebels.tsaenode.core.operation.Operation;
 import org.coderebels.tsaenode.core.operation.IOperationMgr;
 import org.coderebels.tsaenode.core.operation.OperationMgr;
-import org.coderebels.tsaenode.core.exception.AXCBaseException;
+import org.coderebels.tsaenode.core.sync.ISyncMgr;
+import org.coderebels.tsaenode.core.sync.TSAESyncMgr;
 
 
 /**
@@ -58,6 +62,7 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
 
   private IFileMgr fileMgr;
   private IOperationMgr operationMgr;
+  private ISyncMgr syncMgr;
 
 
   public TSAEnode() throws RemoteException, UnknownHostException, ConfigException {
@@ -74,22 +79,25 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
     String pubFolderURI  = String.format( "http://%s/tsaenode/%s", nodeIP, nodePort );
 
     System.setProperty( "nodeId", nodeId );
+    System.setProperty( "nodeIP", nodeIP );
     System.setProperty( "pubFolderPath", pubFolderPath );
     System.setProperty( "pubFolderURI", pubFolderURI );
 
     fileMgr = new FileMgr();
     operationMgr = new OperationMgr( fileMgr );
+    syncMgr = new TSAESyncMgr( operationMgr );
   }
 
 
-  /**
-   * @return true if done successfully; false otherwise
+  /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.INode#connect()
    */
   public boolean connect() throws RemoteException {
     logger.entry();
     logger.info( "Connecting..." );
 
-    boolean done = setUp();
+    boolean done = joinGroup();
+    done = done && setUp();
 
     return logger.exit( done );
   }
@@ -100,7 +108,7 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
   @Override
   public boolean add(String file) throws RemoteException {
     logger.entry( file );
-    logger.info( "Adding file..." );
+    logger.info( "Serving request for file addition..." );
 
     boolean done = applyOperation( Operation.ADD, file );
 
@@ -113,7 +121,7 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
   @Override
   public boolean remove(String file) throws RemoteException {
     logger.entry( file );
-    logger.info( "Removing file..." );
+    logger.info( "Serving request for file deletion..." );
 
     boolean done = applyOperation( Operation.REMOVE, file );
 
@@ -126,9 +134,9 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
   @Override
   public List<FileData> getIndex() throws RemoteException {
     logger.entry();
-    logger.info( "Retrieving node file index..." );
+    logger.info( "Serving request for file index..." );
     /*
-     * 1) Delegate call to FileMgr through its interface --> IFileMgr.getFileIndex
+     * 1) Delegate call to FileMgr through its interface --> IFileMgr#getFileIndex
      */
     List<FileData> index = fileMgr.getFileIndex();
 
@@ -141,15 +149,109 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
   @Override
   public List<Operation> getOperationLog() throws RemoteException {
     logger.entry();
-    logger.info( "Retrieving node operation log..." );
+    logger.info( "Serving request for operation log..." );
     /*
-     * 1) Delegate call to OperationMgr through its interface --> IOperationMgr.getLog
+     * 1) Delegate call to OperationMgr through its interface --> IOperationMgr#getLog
      */
     List<Operation> ops = operationMgr.getLog();
 
     return logger.exit( ops );
   }
 
+  /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.INode#startTSAESession()
+   */
+  public boolean startTSAESession() throws RemoteException {
+    logger.entry();
+    logger.info( "Serving request for new synchronization session..." );
+    /*
+     * 1) Delegate call to TSAESyncMgr through its interface --> ISyncMgr#startSession
+     */
+    boolean done = false;
+
+    try {
+      done = syncMgr.startSession();
+    } catch(Exception e) {
+      logger.catching( e );
+    }
+
+    return logger.exit( done );
+  }
+
+  /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.INode#performTSAESession(java.util.List, java.util.concurrent.ConcurrentHashMap, java.util.concurrent.ConcurrentHashMap)
+   */
+  @Override
+  public List<Operation> performTSAESession(List<Operation> ops,
+                        ConcurrentHashMap<String, Timestamp> summary,
+                        ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> acks)
+    throws RemoteException {
+    logger.entry( ops, summary, acks );
+    logger.info( "Serving request for synchronization..." );
+    /*
+     * 1) Delegate call to TSAESyncMgr through its interface --> ISyncMgr#performSession
+     */
+    List<Operation> opsToSend = null;
+
+    try {
+      opsToSend = syncMgr.performSession( ops, summary, acks );
+    } catch (Exception e) {
+      logger.catching( e );
+    }
+
+    return logger.exit( opsToSend );
+  }
+
+  /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.INode#requestSummaryTSAESession()
+   */
+  @Override
+  public ConcurrentHashMap<String, Timestamp> requestSummaryTSAESession() throws RemoteException {
+    logger.entry();
+    logger.info( "Serving request for summary vector..." );
+    /*
+     * 1) Delegate call to OperationMgr through its interface --> IOperationMgr#getSummary
+     */
+    ConcurrentHashMap<String, Timestamp> summary = operationMgr.getSummary();
+
+    return logger.exit( summary );
+  }
+
+  /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.INode#requestAckTSAESession()
+   */
+  @Override
+  public ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> requestAckTSAESession()
+    throws RemoteException {
+    logger.entry();
+    logger.info( "Serving request for acknowledgement vector..." );
+    /*
+     * 1) Delegate call to OperationMgr through its interface --> IOperationMgr#getAcks
+     */
+    ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> ackSummary = operationMgr.getAcks();
+
+    return logger.exit( ackSummary );
+  }
+
+
+  /**
+   * Joins the group of nodes
+   * @return true if done successfully; false otherwise
+   */
+  private boolean joinGroup() {
+    logger.entry();
+
+    boolean done = true;
+
+    try {
+      Naming.rebind( String.format("//%s:%s/node%s", nodeIP, rmiPort, nodePort), this );
+    } catch (Exception e) {
+      logger.catching( e );
+      done = false;
+    }
+
+    return logger.exit( done );
+  }
 
   /**
    * Sets up node data structures
@@ -166,11 +268,11 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
       if(!pubFolder.exists()) pubFolder.mkdirs();
 
       for(File file : pubFolder.listFiles()) {
-        done = done && applyOperation( Operation.ADD, file.getAbsolutePath() );
+        done = done && add( file.getAbsolutePath() );
       }
     } catch (Exception e) {
-      done = false;
       logger.catching( e );
+      done = false;
     }
 
     return logger.exit( done );
@@ -187,8 +289,8 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
     logger.debug( "Applying operation..." );
     /*
      * 1) Create a new operation
-     * 2) Execute operation --> IOperationMgr.executeOperation
-     * 3) Start synchronization session --> ISyncMgr.startSession [ Phase 3 ]
+     * 2) Execute operation --> IOperationMgr#executeOperation
+     * 3) Start synchronization session --> ISyncMgr#startSession
      * 4) Return true if done successfully
      */
     boolean done = false;
@@ -198,9 +300,11 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
         Operation op = operationMgr.createOperation( type, file );
         done = operationMgr.executeOperation( op );
       }
-    } catch (AXCBaseException e) {
-      done = false;
+
+      done = done && syncMgr.startSession();
+    } catch (Exception e) {
       logger.catching( e );
+      done = false;
     }
 
     return logger.exit( done );

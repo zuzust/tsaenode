@@ -17,6 +17,7 @@
 
 package org.coderebels.tsaenode;
 
+import java.io.File;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.BufferedReader;
@@ -63,15 +64,15 @@ public class Main {
 
   public void start() {
     // Register Node
-    TSAEnode node = registerNode();
+    INode node = registerNode();
 
     // Read, Evaluate and Print
     repl( node );   
   }
   
 
-  private TSAEnode registerNode() {
-    TSAEnode node = null;
+  private INode registerNode() {
+    INode node = null;
 
     try {
       node = new TSAEnode();
@@ -90,7 +91,7 @@ public class Main {
     return node;
   }
 
-  private void repl(TSAEnode node) {
+  private void repl(INode node) {
     boolean exit = false;
     int action = 0;
 
@@ -119,7 +120,9 @@ public class Main {
   }
 
   private StringWriter prepareTemplate(String template, VelocityContext context) throws Exception {
-    Reader reader = new InputStreamReader( getClass().getClassLoader().getResourceAsStream(template) );
+    String templatePath = "templates" + File.separator + template;
+    
+    Reader reader = new InputStreamReader( getClass().getClassLoader().getResourceAsStream(templatePath) );
     StringWriter writer = new StringWriter();
     Velocity.evaluate( context, writer, "", reader );
 
@@ -144,7 +147,7 @@ public class Main {
     return read();
   }
 
-  private boolean evaluateAction(int action, TSAEnode node) throws Exception {
+  private boolean evaluateAction(int action, INode node) throws Exception {
     boolean exit = false;
 
     switch (action) {
@@ -167,7 +170,7 @@ public class Main {
     return exit;
   }
 
-  private void addFile(TSAEnode node) throws Exception {
+  private void addFile(INode node) throws Exception {
     String file  = readFilename();
     boolean done = node.add( file );
 
@@ -178,7 +181,7 @@ public class Main {
     }
   }
 
-  private void removeFile(TSAEnode node) throws Exception {
+  private void removeFile(INode node) throws Exception {
     String file  = readFilename();
     boolean done = node.remove( file );
 
@@ -189,7 +192,7 @@ public class Main {
     }
   }
 
-  private void showIndex(TSAEnode node) throws Exception {
+  private void showIndex(INode node) throws Exception {
     List<FileData> files = node.getIndex();
 
     VelocityContext context = new VelocityContext();
@@ -199,7 +202,7 @@ public class Main {
     System.out.println( writer.toString() );
   }
 
-  private void showLog(TSAEnode node) throws Exception {
+  private void showLog(INode node) throws Exception {
     List<Operation> ops = node.getOperationLog();
 
     VelocityContext context = new VelocityContext();

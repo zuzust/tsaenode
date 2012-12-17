@@ -17,6 +17,7 @@
 
 package org.coderebels.tsaenode.core.common;
 
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.Logger;
@@ -38,6 +39,38 @@ public class Summary {
     data = new ConcurrentHashMap<String, Timestamp>();
   }
 
+  public Summary(ConcurrentHashMap<String, Timestamp> data) {
+    this.data = data;
+  }
+
+
+  /**
+   * Gets data from summary vector
+   * @return Map of operation timestamps known by the node
+   */
+  public ConcurrentHashMap<String, Timestamp> getData() {
+    logger.entry();
+    logger.debug( "Retrieving summary data..." );
+
+    return logger.exit( data );
+  }
+
+  /**
+   * Updates summary vector with the specified summary data
+   * @param summary Summary vector with the latest information
+   */
+  public void update(Summary summary) {
+    logger.entry( summary );
+    logger.debug( "Updating summary vector..." );
+
+    if (summary != null) {
+      for (Timestamp timestamp : summary.getData().values()) {
+        update( timestamp );
+      }
+    }
+
+    logger.exit();
+  }
 
   /**
    * Updates the summary with a new timestamp
@@ -64,6 +97,14 @@ public class Summary {
    */
   public Timestamp getLast(String nodeId) {
     return data.get( nodeId );
+  }
+
+  /**
+   * Gets the list of identifiers of the already summarized nodes
+   * @return List of identifiers of the summarized nodes
+   */
+  public Set<String> summarizedNodes() {
+    return data.keySet();
   }
 
 }

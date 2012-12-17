@@ -40,6 +40,17 @@ public class FileIndex {
 
 
   /**
+   * Gets the file list from the index
+   * @return List of file data in index
+   */
+  public List<FileData> getData() {
+    logger.entry();
+    logger.debug( "Retrieving index data..." );
+
+    return logger.exit( data );
+  }
+
+  /**
    * Adds or updates a file in the index
    * @param file File to add
    */
@@ -90,17 +101,6 @@ public class FileIndex {
     }
 
     return logger.exit( null );
-  }
-
-  /**
-   * Gets the file list from the index
-   * @return List of file data in index
-   */
-  public List<FileData> getData() {
-    logger.entry();
-    logger.debug( "Retrieving index data..." );
-
-    return logger.exit( data );
   }
 
 }

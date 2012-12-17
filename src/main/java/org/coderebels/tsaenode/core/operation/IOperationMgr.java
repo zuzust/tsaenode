@@ -18,7 +18,9 @@
 package org.coderebels.tsaenode.core.operation;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.coderebels.tsaenode.core.common.Timestamp;
 import org.coderebels.tsaenode.core.exception.OperationMgrException;
 
 
@@ -45,9 +47,43 @@ public interface IOperationMgr {
   public boolean executeOperation(Operation op) throws OperationMgrException;
 
   /**
+   * Gets the list of operations known to the local node, but unknown to the fellow remote node
+   * @param sum Summary vector of the fellow remote node
+   * @return List of operations known to the local node, but unknown to the fellow remote node
+   */
+  public List<Operation> extractOperations(ConcurrentHashMap<String, Timestamp> sum);
+
+  /**
+   * Gets the summary vector of the local node
+   * @return Summary vector of the local node
+   */
+  public ConcurrentHashMap<String, Timestamp> getSummary();
+
+  /**
    * Gets the operation log managed by the local node
    * @return Operation log of the local node
    */
   public List<Operation> getLog();
+
+  /**
+   * Executes the specified list of operations and updates the local node operation log accordingly
+   * @param ops List of operations to execute on the local node
+   * @return true if done successfully; false otherwise
+   * @throws OperationMgrException
+   */
+  public boolean updateLog(List<Operation> ops) throws OperationMgrException;
+
+  /**
+   * Gets the acknowledgement vector of the local node
+   * @return Acknowledgement vector of the local node
+   */
+  public ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> getAcks();
+
+  /**
+   * Updates the acknowledgement vector of the local node based on information from the fellow remote node acknowledgement vector
+   * @param acks Acknowledgement vector of the fellow remote node
+   * @return true if done successfully; false otherwise
+   */
+  public boolean updateAcks(ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> acks);
 
 }

@@ -55,15 +55,15 @@ public class Operation implements Serializable {
 
     switch (this.type) {
       case ADD:
-        type = "add";
+        type = "ADD";
         break;
 
       case REMOVE:
-        type = "remove";
+        type = "REMOVE";
         break;
 
       default:
-        type = "unknown";
+        type = "UNKNOWN";
     }
 
     return String.format( "Operation[%s,%s,%s]", timestamp.toShortString(), type, file.getURI() );

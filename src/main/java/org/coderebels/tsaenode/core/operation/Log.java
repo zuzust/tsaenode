@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentNavigableMap;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -43,6 +44,23 @@ public class Log {
     this.data = new ConcurrentHashMap<String, ConcurrentSkipListMap<Long, Operation>>();
   }
 
+
+  /**
+   * Gets the operation log data
+   * @return Operation list from log
+   */
+  public List<Operation> getData() {
+    logger.entry();
+    logger.debug( "Retrieving log data..." );
+
+    List<Operation> ops = new Vector<Operation>();
+
+    for (ConcurrentSkipListMap<Long, Operation> opsMap : data.values()) {
+      ops.addAll( opsMap.values() );
+    }
+
+    return logger.exit( ops );
+  }
 
   /**
    * Adds an operation to the log
@@ -68,17 +86,45 @@ public class Log {
   }
 
   /**
-   * Gets the operation log data
-   * @return Operation list from log
+   * Gets the first operation of the specified node in the log
+   * @param nodeId Node identifier
+   * @return First operation of node in the log
    */
-  public List<Operation> getData() {
-    logger.entry();
-    logger.debug( "Retrieving log data..." );
+  public synchronized Operation getFirst(String nodeId) {
+    logger.entry( nodeId );
+    logger.debug( "Retrieving first operation from log..." );
+
+    Operation op = null;
+
+    ConcurrentSkipListMap<Long, Operation> nodeOps = data.get( nodeId );
+
+    if (nodeOps != null && !nodeOps.isEmpty()) {
+      op = nodeOps.get( nodeOps.firstKey() );
+    }
+
+    return logger.exit( op );
+  }
+
+  /**
+   * Gets the list of operations between the specified timestamps
+   * @param nodeId Node identifier
+   * @param first Initial timestamp
+   * @param last Last timestamp (included)
+   * @param incFirst True if first operation from range must be included; false otherwise
+   * @return List of operations from first to last (included)
+   */
+  public List<Operation> extract(String nodeId, Timestamp first, Timestamp last, boolean incFirst) {
+    logger.entry( nodeId, first, last, incFirst );
+    logger.debug( "Extracting operations from log..." );
 
     List<Operation> ops = new Vector<Operation>();
+    ConcurrentSkipListMap<Long, Operation> nodeOps = data.get( nodeId );
 
-    for (ConcurrentSkipListMap<Long, Operation> opsMap : data.values()) {
-      ops.addAll( opsMap.values() );
+    if (nodeOps != null && !nodeOps.isEmpty()) {
+      boolean incLast = true;
+      ConcurrentNavigableMap<Long, Operation> subset = nodeOps.subMap( first.getSeqNumber(), incFirst, last.getSeqNumber(), incLast);
+
+      ops.addAll( subset.values() );
     }
 
     return logger.exit( ops );
