@@ -17,6 +17,7 @@
 
 package org.coderebels.tsaenode.core.common;
 
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.Logger;
@@ -38,6 +39,7 @@ public class AckSummary {
     data = new ConcurrentHashMap<String, Summary>();
   }
 
+
   /**
    * Gets data from acknowledgement vector
    * @return Map of summary vectors of nodes in the group
@@ -56,6 +58,24 @@ public class AckSummary {
     }
 
     return logger.exit( ackData );
+  }
+
+  /**
+   * Add summary vector of the specified node
+   * @param nodeId Node identifier
+   * @param summary Summary vector of specified node
+   */
+  public void add(String nodeId, Summary summary) {
+    data.put( nodeId, summary );
+  }
+
+  /**
+   * Get summary vector of the specified node
+   * @param nodeId Node identifier
+   * @return Summary vector of specified node
+   */
+  public Summary get(String nodeId) {
+    return data.get( nodeId );
   }
 
   /**
@@ -80,6 +100,14 @@ public class AckSummary {
     }
 
     logger.exit();
+  }
+
+  /**
+   * Get list of nodes identifiers from which summarized info is available
+   * @return List of summarized nodes identifiers
+   */
+  public Set<String> summarizedNodes() {
+    return data.keySet();
   }
 
 }

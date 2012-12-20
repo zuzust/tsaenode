@@ -38,21 +38,21 @@ public class BroadcastSyncPolicy implements ISyncPolicy {
 
   /* (non-Javadoc)
    * @see org.coderebels.tsaenode.core.sync.ISyncPolicy#selectSyncNodes(java.util.List,
-   * org.coderebels.tsaenode.core.sync.SynMap)
+   * org.coderebels.tsaenode.core.sync.SyncMap)
    */
   @Override
-  public synchronized List<Node> selectSyncNodes(List<Node> nodes, SyncMap syncMap) {
+  public synchronized List<Peer> selectSyncNodes(List<Peer> nodes, SyncMap syncMap) {
     logger.entry();
     logger.debug( "Selecting nodes to synchronize with..." );
     /*
      * 1) Return a list of nodes containing all peers available for synchronization
      */
-    List<Node> syncNodes = new Vector<Node>();
+    List<Peer> syncNodes = new Vector<Peer>();
 
     boolean connected = false;
     boolean synchronizing = false;
 
-    for (Node node : nodes) {
+    for (Peer node : nodes) {
       connected = node.isConnected();
       synchronizing = !syncMap.isAvailable( node );
 

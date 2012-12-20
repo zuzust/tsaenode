@@ -30,9 +30,9 @@ import org.coderebels.tsaenode.core.INode;
 /**
  * @author carles.ml.dev@gmail.com (Carles Muiños)
  */
-public class Node implements Serializable {
+public class Peer implements Serializable {
 
-  private static Logger logger = LogManager.getLogger( Node.class.getName() );
+  private static Logger logger = LogManager.getLogger( Peer.class.getName() );
 
   private String id;
   private String ip;
@@ -40,7 +40,7 @@ public class Node implements Serializable {
   private int rmiPort;
 
 
-  public Node() {
+  public Peer() {
     rmiPort = 1099;
   }
 
@@ -75,10 +75,9 @@ public class Node implements Serializable {
   public boolean isConnected() {
     return getStub() != null;
   }
-  
+
   @Override
   public String toString() {
     return String.format( "Node[%s,%d]", id, rmiPort );
   }
-
 }

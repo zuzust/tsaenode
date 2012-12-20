@@ -1,8 +1,8 @@
 
 =================================
-Operation Log: [Timestamp Type(0=ADD, 1=REMOVE) FileURI]
+Operation Log: [Timestamp --> Type(0=ADD, 1=REMOVE) <FileURI>]
 ---------------------------------
 #foreach( $op in $ops )
-[${op.timestamp.nodeId}, ${op.timestamp.seqNumber}]    ${op.type}    ${op.file.getURI()}
+$op.timestamp.toShortString() --> $op.type <${op.file.getURI()}>
 #end
 =================================

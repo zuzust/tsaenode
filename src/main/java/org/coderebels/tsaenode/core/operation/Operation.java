@@ -48,6 +48,7 @@ public class Operation implements Serializable {
   public Timestamp getTimestamp() { return timestamp; }
   public void setTimestamp(Timestamp timestamp) { this.timestamp = timestamp; }
 
+  public String getCreator() { return timestamp.getNodeId(); }
 
   @Override
   public String toString() {

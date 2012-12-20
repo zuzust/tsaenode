@@ -1,0 +1,9 @@
+
+=================================
+Summary vector: [NodeId --> SeqNumber]
+---------------------------------
+#set( $timestamps = $summary.values() )
+#foreach( $timestamp in $timestamps )
+$timestamp.nodeId --> $timestamp.seqNumber
+#end
+=================================

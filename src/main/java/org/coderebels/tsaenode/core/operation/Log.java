@@ -130,4 +130,22 @@ public class Log {
     return logger.exit( ops );
   }
 
+  /**
+   * Remove from log operations timestamped before than specified timestamp
+   * @param nodeId Identifier of node responsible of operations to remove
+   * @param lastSeen Timestamp of last executed operation of specified node seen by all nodes within the group
+   */
+  public synchronized void removeAllPreceding(String nodeId, Timestamp lastSeen) {
+    ConcurrentSkipListMap<Long, Operation> nodeOps = data.get( nodeId );
+
+    if (nodeOps != null && !nodeOps.isEmpty()) {
+      long seqNum = nodeOps.firstKey();
+
+      while (!nodeOps.isEmpty() && seqNum <= lastSeen.getSeqNumber()) {
+        nodeOps.remove( seqNum );
+        seqNum++;
+      }
+    }
+  }
+
 }

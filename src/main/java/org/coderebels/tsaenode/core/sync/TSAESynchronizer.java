@@ -39,7 +39,7 @@ public class TSAESynchronizer implements Runnable {
   /**
    * Reference to synchronization peer
    */
-  private Node peer;
+  private Peer peer;
   /**
    * Reference to local node OperationMgr
    */
@@ -50,7 +50,7 @@ public class TSAESynchronizer implements Runnable {
   private SyncMap syncMap;
 
 
-  public TSAESynchronizer(Node peer, IOperationMgr operationMgr, SyncMap syncMap) {
+  public TSAESynchronizer(Peer peer, IOperationMgr operationMgr, SyncMap syncMap) {
     this.peer = peer;
     this.operationMgr = operationMgr;
     this.syncMap = syncMap;
@@ -76,8 +76,8 @@ public class TSAESynchronizer implements Runnable {
     logger.debug( "Synchronizing node..." );
     /*
      * 0) Get the peer node stub
-     * 1) Retrieve the peer summary vector --> INode#requestSummaryTSAESession
-     * 2) Retrieve the peer acknowledgement vector --> INode#requestAckTSAESession
+     * 1) Retrieve the peer summary vector --> INode#requestSummary
+     * 2) Retrieve the peer acknowledgement vector --> INode#requestAckSummary
      * 3) Extract the operations not seen by peer based on its summary vector --> IOperationMgr#extractOperations
      * 4) Request the peer to perform a synchronization session --> INode#performTSAESession
      * 5) Update local node operation log --> IOperationMgr#updateLog
@@ -91,12 +91,12 @@ public class TSAESynchronizer implements Runnable {
 
       if (stub == null) {
         String mesg = "Unable to contact the peer node";
-        String method = String.format("TSAESynchronizer#doSynchronize() --> %s", peer );
+        String method = "TSAESynchronizer#doSynchronize()";
         throw new SyncMgrException( mesg, method );
       }
 
-      ConcurrentHashMap<String, Timestamp> peerSummary = stub.requestSummaryTSAESession();
-      ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> peerAckSummary = stub.requestAckTSAESession();
+      ConcurrentHashMap<String, Timestamp> peerSummary = stub.requestSummary();
+      ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> peerAckSummary = stub.requestAckSummary();
 
       List<Operation> opsToSend = operationMgr.extractOperations( peerSummary );
       List<Operation> opsToExec = stub.performTSAESession( opsToSend, operationMgr.getSummary(), operationMgr.getAcks() );

@@ -1,0 +1,9 @@
+
+=================================
+Node profile:
+---------------------------------
+Id: $profile.id
+IP: $profile.getIP()
+Port: $profile.port
+RMI Port: $profile.getRmiPort()
+=================================

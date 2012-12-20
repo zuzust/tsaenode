@@ -38,17 +38,17 @@ public class MulticastSyncPolicy implements ISyncPolicy {
 
   /* (non-Javadoc)
    * @see org.coderebels.tsaenode.core.sync.ISyncPolicy#selectSyncNodes(java.util.List,
-   * org.coderebels.tsaenode.core.sync.SynMap)
+   * org.coderebels.tsaenode.core.sync.SyncMap)
    */
   @Override
-  public synchronized List<Node> selectSyncNodes(List<Node> nodes, SyncMap syncMap) {
+  public synchronized List<Peer> selectSyncNodes(List<Peer> nodes, SyncMap syncMap) {
     logger.entry();
     logger.debug( "Selecting nodes to synchronize with..." );
     /*
      * 1) Select randomly a subset of peers available for synchronization: [ log_2(nodes.size) + 1 ] --> [ ( log_e(nodes.size) / log_e(2) ) + 1 ]
      * 2) Return a list of nodes containing the selected peers
      */
-    List<Node> syncNodes = new Vector<Node>();
+    List<Peer> syncNodes = new Vector<Peer>();
 
     boolean connected = false;
     boolean synchronizing = false;
@@ -59,7 +59,7 @@ public class MulticastSyncPolicy implements ISyncPolicy {
     int attempts = (int) Math.floor( numSyncNodes * 1.5 );
     int addedNodes = 0;
 
-    Node node = null;
+    Peer node = null;
     Random rnd = new Random();
 
     do {

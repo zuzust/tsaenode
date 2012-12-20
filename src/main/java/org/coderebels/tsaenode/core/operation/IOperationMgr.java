@@ -74,6 +74,13 @@ public interface IOperationMgr {
   public boolean updateLog(List<Operation> ops) throws OperationMgrException;
 
   /**
+   * Deletes from the log operations known by all nodes within the group
+   * @param groupSize Number of nodes within the group
+   * @return true if done successfully; false otherwise
+   */
+  public boolean purgeLog(int groupSize);
+
+  /**
    * Gets the acknowledgement vector of the local node
    * @return Acknowledgement vector of the local node
    */

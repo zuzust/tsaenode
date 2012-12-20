@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.coderebels.tsaenode.core.common.Timestamp;
 import org.coderebels.tsaenode.core.file.FileData;
 import org.coderebels.tsaenode.core.operation.Operation;
+import org.coderebels.tsaenode.core.sync.Peer;
 
 
 /**
@@ -38,6 +39,20 @@ public interface INode extends Remote {
    * @throws java.rmi.RemoteException
    */
   public boolean connect() throws RemoteException;
+
+  /**
+   * Leaves the group of nodes
+   * @return true if done successfully; false otherwise
+   * @throws java.rmi.RemoteException
+   */
+  public boolean disconnect() throws RemoteException;
+
+  /**
+   * Gets node profile (id, ip, port, ...)
+   * @return Node profile encapsulation
+   * @throws java.rmi.RemoteException
+   */
+  public Peer requestProfile() throws RemoteException;
 
   /**
    * Adds a file to publication folder, becoming shareable within the group
@@ -60,17 +75,34 @@ public interface INode extends Remote {
    * @return File index
    * @throws java.rmi.RemoteException
    */
-  public List<FileData> getIndex() throws RemoteException;
+  public List<FileData> requestFileIndex() throws RemoteException;
 
   /**
    * Gets the operation log managed by the node
    * @return Operation log managed by node
    * @throws java.rmi.RemoteException
    */
-  public List<Operation> getOperationLog() throws RemoteException;
+  public List<Operation> requestLog() throws RemoteException;
+
+  /**
+   * Gets the summary vector managed by the node
+   * @return Summary vector managed by node
+   * @throws java.rmi.RemoteException
+   */
+  public ConcurrentHashMap<String, Timestamp> requestSummary() throws RemoteException;
+
+  /**
+   * Gets the acknowledgement vector managed by node
+   * @return Acknowledgement vector managed by node
+   * @throws java.rmi.RemoteException
+   */
+  public ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> requestAckSummary()
+    throws RemoteException;
 
   /**
    * Starts a new synchronization session
+   * @return true if done successfully; false otherwise
+   * @throws java.rmi.RemoteException
    */
   public boolean startTSAESession() throws RemoteException;
 
@@ -85,21 +117,6 @@ public interface INode extends Remote {
   public List<Operation> performTSAESession(List<Operation> ops,
                         ConcurrentHashMap<String, Timestamp> summary,
                         ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> acks)
-    throws RemoteException;
-
-  /**
-   * Gets the summary vector of the node
-   * @return Summary vector of node
-   * @throws java.rmi.RemoteException
-   */
-  public ConcurrentHashMap<String, Timestamp> requestSummaryTSAESession() throws RemoteException;
-
-  /**
-   * Gets the acknowledgement vector of the node
-   * @return Acknowledgement vector of node
-   * @throws java.rmi.RemoteException
-   */
-  public ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> requestAckTSAESession()
     throws RemoteException;
 
 }

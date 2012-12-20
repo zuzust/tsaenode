@@ -23,6 +23,7 @@ import java.io.StringWriter;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -32,8 +33,10 @@ import org.apache.velocity.app.Velocity;
 
 import org.coderebels.tsaenode.core.INode;
 import org.coderebels.tsaenode.core.TSAEnode;
+import org.coderebels.tsaenode.core.common.Timestamp;
 import org.coderebels.tsaenode.core.file.FileData;
 import org.coderebels.tsaenode.core.operation.Operation;
+import org.coderebels.tsaenode.core.sync.Peer;
 
 
 /**
@@ -67,7 +70,10 @@ public class Main {
     INode node = registerNode();
 
     // Read, Evaluate and Print
-    repl( node );   
+    repl( node );
+
+    // Unegister Node and Exit
+    unregisterNode( node );
   }
   
 
@@ -91,6 +97,24 @@ public class Main {
     return node;
   }
 
+  private void unregisterNode(INode node) {
+    try {
+      boolean done = node.disconnect();
+
+      if (done) {
+        System.out.println( "Bye bye!" );
+        System.exit( 0 );
+      } else {
+        System.out.println( "An error occurred while unregistering the node." );
+        System.exit( -1 );
+      }
+    } catch (Exception e) {
+      logger.catching( e );
+      System.out.println( "An error occurred while unregistering the node." );
+      System.exit( -1 );
+    }
+  }
+
   private void repl(INode node) {
     boolean exit = false;
     int action = 0;
@@ -107,9 +131,6 @@ public class Main {
       logger.catching( e );
       System.out.println( "An error occurred while interacting with the node." );
     }
-
-    System.out.println( "Bye bye!" );
-    System.exit( 0 );
   }
 
   private StringWriter prepareOptions() throws Exception {
@@ -151,16 +172,28 @@ public class Main {
     boolean exit = false;
 
     switch (action) {
+      case 0: showProfile( node );
+        break;
+
       case 1: addFile( node );
         break;
 
       case 2: removeFile( node );
         break;
 
-      case 3: showIndex( node );
+      case 3: showFileIndex( node );
         break;
 
       case 4: showLog( node );
+        break;
+
+      case 5: showSummary( node );
+        break;
+
+      case 6: showAckSummary( node );
+        break;
+
+      case 7: runSyncSession( node );
         break;
 
       default: exit = true;
@@ -168,6 +201,16 @@ public class Main {
     }
 
     return exit;
+  }
+
+  private void showProfile(INode node) throws Exception {
+    Peer profile = node.requestProfile();
+
+    VelocityContext context = new VelocityContext();
+    context.put( "profile", profile );
+    StringWriter writer = prepareTemplate( "peer.vm", context );
+
+    System.out.println( writer.toString() );
   }
 
   private void addFile(INode node) throws Exception {
@@ -192,8 +235,8 @@ public class Main {
     }
   }
 
-  private void showIndex(INode node) throws Exception {
-    List<FileData> files = node.getIndex();
+  private void showFileIndex(INode node) throws Exception {
+    List<FileData> files = node.requestFileIndex();
 
     VelocityContext context = new VelocityContext();
     context.put( "files", files );
@@ -203,13 +246,43 @@ public class Main {
   }
 
   private void showLog(INode node) throws Exception {
-    List<Operation> ops = node.getOperationLog();
+    List<Operation> ops = node.requestLog();
 
     VelocityContext context = new VelocityContext();
     context.put( "ops", ops );
     StringWriter writer = prepareTemplate( "log.vm", context );
 
     System.out.println( writer.toString() );
+  }
+
+  private void showSummary(INode node) throws Exception {
+    ConcurrentHashMap<String, Timestamp> summary = node.requestSummary();
+
+    VelocityContext context = new VelocityContext();
+    context.put( "summary", summary );
+    StringWriter writer = prepareTemplate( "summary.vm", context );
+
+    System.out.println( writer.toString() );
+  }
+
+  private void showAckSummary(INode node) throws Exception {
+    ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> ackSummary = node.requestAckSummary();
+
+    VelocityContext context = new VelocityContext();
+    context.put( "ackSummary", ackSummary );
+    StringWriter writer = prepareTemplate( "ackSummary.vm", context );
+
+    System.out.println( writer.toString() );
+  }
+
+  private void runSyncSession(INode node) throws Exception {
+    boolean done = node.startTSAESession();
+
+    if (done) {
+      System.out.println( "Synchronization run succesfully." );
+    } else {
+      System.out.println( "An error occurred while running synchronization session." );
+    }
   }
 
 }

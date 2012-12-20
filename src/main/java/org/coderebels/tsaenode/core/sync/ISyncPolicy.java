@@ -28,9 +28,9 @@ public interface ISyncPolicy {
   /**
    * Selects the subset of nodes with whom the local node will synchronize
    * @param nodes List of nodes joinning the group
-   * @param syncMap List of nodes with whom local node is synchronizing
+   * @param syncMap Map of nodes with whom local node is synchronizing
    * @return List of nodes selected for synchronization
    */
-  public List<Node> selectSyncNodes(List<Node> nodes, SyncMap syncMap);
+  public List<Peer> selectSyncNodes(List<Peer> nodes, SyncMap syncMap);
 
 }

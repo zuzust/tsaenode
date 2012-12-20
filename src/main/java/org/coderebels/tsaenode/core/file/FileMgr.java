@@ -116,7 +116,7 @@ public class FileMgr implements IFileMgr {
     try {
       String filename = basename( file.getPath() );
 
-      if (file.getTimestamp().getNodeId().equals(localNodeId)) {
+      if (file.getOwner().equals(localNodeId)) {
         doAddFile( file );
         file.setPath( pubFolderPath + File.separator + filename );
         file.setURI( pubFolderURI + "/" + filename );
@@ -153,7 +153,7 @@ public class FileMgr implements IFileMgr {
     boolean done = false;
 
     try {
-      if (file.getTimestamp().getNodeId().equals(localNodeId)) {
+      if (file.getOwner().equals(localNodeId)) {
         doRemoveFile( file );
       }
 

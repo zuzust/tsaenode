@@ -91,6 +91,15 @@ public class Summary {
   }
 
   /**
+   * Associate the timestamp to the specified node in the summary vector
+   * @param nodeId Identifier of the node to which the timestamp is associated
+   * @param timestamp Associated timestamp
+   */
+  public void put(String nodeId, Timestamp timestamp) {
+    data.put( nodeId, timestamp );
+  }
+
+  /**
    * Gets the last timestamp of the specified node
    * @param nodeId Node identifier
    * @return Last known timestamp from the specified node

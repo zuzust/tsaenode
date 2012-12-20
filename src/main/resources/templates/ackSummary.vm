@@ -1,0 +1,15 @@
+
+=================================
+Acknowledgement vector: [NodeId --> SeqNumber]
+---------------------------------
+#set( $nodes = $ackSummary.keys() )
+#foreach( $node in $nodes )
+
+$node
+....................
+#set( $timestamps = $ackSummary.get($node).values() )
+#foreach( $timestamp in $timestamps)
+$timestamp.nodeId --> $timestamp.seqNumber
+#end
+#end
+=================================

@@ -49,11 +49,11 @@ public class TSAESyncMgr implements ISyncMgr {
    */
   private String localNodeId;
   /**
-   * List of nodes joinning the group
+   * List of peers joinning the group
    */
-  private List<Node> nodes;
+  private List<Peer> peers;
   /**
-   * List of nodes with whom local node is synchronizing
+   * Map of peers with whom local node is synchronizing
    */
   private SyncMap syncMap;
   /**
@@ -71,7 +71,7 @@ public class TSAESyncMgr implements ISyncMgr {
     Config conf = ConfigFactory.load();
 
     this.localNodeId  = conf.getString( "nodeId" );
-    this.nodes        = setUpGroup( conf );
+    this.peers        = setUpGroup( conf );
     this.syncMap      = new SyncMap();
     this.syncPolicy   = SyncPolicyFactory.getPolicy( conf.getInt("policy") );
     this.operationMgr = operationMgr;
@@ -95,8 +95,10 @@ public class TSAESyncMgr implements ISyncMgr {
     try {
       done = doSynchronize();
 
-      // TODO
-      // Purge Operation Log
+      synchronized (lock) {
+        int groupSize = 1 + peers.size(); // Recall that we didn't add localnode to peers
+        done = done && operationMgr.purgeLog( groupSize );
+      }
     } catch (Exception e) {
       done = false;
       String mesg   = String.format( "An error occurred while starting the synchronization session" );
@@ -137,7 +139,7 @@ public class TSAESyncMgr implements ISyncMgr {
     } catch (Exception e) {
       opsToSend = null;
       String mesg   = String.format( "An error occurred while performing the synchronization session" );
-      String method = String.format( "TSAESyncMgr#performSession( %s, %s, %s)", ops, summary, acks );
+      String method = String.format( "TSAESyncMgr#performSession( %s, %s, %s )", ops, summary, acks );
       throw new SyncMgrException( mesg, method, e );
     }
 
@@ -146,16 +148,16 @@ public class TSAESyncMgr implements ISyncMgr {
 
 
   /**
-   * Indexes the member nodes of the group
+   * Indexes the peers of the group
    * @param conf Config settings
-   * @return List of nodes of the group
+   * @return List of peers of the group
    * @throws com.typesafe.config.ConfigException
    */
-  private List<Node> setUpGroup(Config conf) throws ConfigException {
+  private List<Peer> setUpGroup(Config conf) throws ConfigException {
     logger.entry();
     logger.debug( "Indexing group..." );
 
-    List<Node> nodes = new Vector<Node>();
+    List<Peer> peers = new Vector<Peer>();
 
     Config group = conf.getConfig( "group" );
     List<String> ns = group.getStringList( "nodes" );
@@ -164,22 +166,22 @@ public class TSAESyncMgr implements ISyncMgr {
       Config nc = group.getConfig( n );
       String nodeId = String.format("%s:%s", nc.getString("ip"), nc.getInt("port"));
 
-      if (nodeId != localNodeId) {
-        Node node = new Node();
+      if (!nodeId.equals( localNodeId )) {
+        Peer node = new Peer();
         node.setId( nodeId );
         node.setIP( nc.getString("ip") );
         node.setPort( nc.getInt("port") );
         node.setRmiPort( conf.getInt("rmiPort") );
 
-        nodes.add( node );
+        peers.add( node );
       }
     }
 
-    return logger.exit( nodes );
+    return logger.exit( peers );
   }
 
   /**
-   * Synchronizes the local node and a selected subset of nodes
+   * Synchronizes the local node and a selected subset of peers
    * @return true if done successfully; false otherwise
    * @throws org.coderebels.tsaenode.core.exception.SyncMgrException
    */
@@ -187,20 +189,20 @@ public class TSAESyncMgr implements ISyncMgr {
     logger.entry();
     logger.debug( "Synchronizing nodes..." );
     /*
-     * 1) Select the subset of nodes with whom local node will synchronize
+     * 1) Select the subset of peers with whom local node will synchronize
      * 2) For each fellow node in the subset start a new synchronization session using a SyncAgent
      * 3) Return true if done successfully; false otherwise
      */
     boolean done = false;
 
     try {
-      List<Node> syncNodes = syncPolicy.selectSyncNodes( nodes, syncMap );
+      List<Peer> syncNodes = syncPolicy.selectSyncNodes( peers, syncMap );
       //
       // Increase concurrency at this point
       //
       List<Thread> syncThreads = new Vector<Thread>();
 
-      for (Node peer : syncNodes) {
+      for (Peer peer : syncNodes) {
         Runnable synchronizer = new TSAESynchronizer( peer, operationMgr, syncMap );
         Thread syncThread = new Thread( synchronizer );
         syncThreads.add( syncThread );

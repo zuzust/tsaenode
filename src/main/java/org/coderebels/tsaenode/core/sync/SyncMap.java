@@ -39,17 +39,17 @@ public class SyncMap {
    * @param node Node to check
    * @return true if the specified node isn't involved in a running synchronization session; false otherwise
    */
-  public boolean isAvailable(Node node) {
+  public boolean isAvailable(Peer node) {
     String nodeId = node.getId();
     return data.containsKey( nodeId ) ? data.get( nodeId ) : true;
   }
 
-  public void setAvailable(Node node) {
+  public void setAvailable(Peer node) {
     String nodeId = node.getId();
     data.put( nodeId, true );
   }
 
-  public void setUnavailable(Node node) {
+  public void setUnavailable(Peer node) {
     String nodeId = node.getId();
     data.put( nodeId, false );
   }

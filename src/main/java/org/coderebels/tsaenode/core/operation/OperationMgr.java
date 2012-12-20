@@ -18,8 +18,10 @@
 package org.coderebels.tsaenode.core.operation;
 
 import java.util.Iterator;
+import java.util.Set;
 import java.util.List;
 import java.util.Vector;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.typesafe.config.Config;
@@ -73,7 +75,9 @@ public class OperationMgr implements IOperationMgr {
     this.fileMgr = fileMgr;
     this.log     = new Log();
     this.summary = new Summary();
+    
     this.ackSummary = new AckSummary();
+    this.ackSummary.add( localNodeId, summary );
   }
 
 
@@ -150,8 +154,8 @@ public class OperationMgr implements IOperationMgr {
             break;
 
           case Operation.REMOVE:
-            String creator = op.getTimestamp().getNodeId();
-            String owner   = op.getFile().getTimestamp().getNodeId();
+            String creator = op.getCreator();
+            String owner   = op.getFile().getOwner();
 
             if (!creator.equals(owner)) {
               String mesg   = String.format( "Unable to execute the remove operation: the file belongs to another user -> %s", file );
@@ -182,7 +186,7 @@ public class OperationMgr implements IOperationMgr {
    * @see org.coderebels.tsaenode.core.operation.IOperationMgr#extractOperations(java.util.concurrent.ConcurrentHashMap)
    */
   @Override
-  public List<Operation> extractOperations(ConcurrentHashMap<String, Timestamp> sum) {
+  public synchronized List<Operation> extractOperations(ConcurrentHashMap<String, Timestamp> sum) {
     logger.entry( sum );
     logger.debug( "Retrieving unknown operations..." );
     /*
@@ -250,7 +254,7 @@ public class OperationMgr implements IOperationMgr {
    * @see org.coderebels.tsaenode.core.operation.IOperationMgr#updateLog(java.util.List)
    */
   @Override
-  public boolean updateLog(List<Operation> ops) throws OperationMgrException {
+  public synchronized boolean updateLog(List<Operation> ops) throws OperationMgrException {
     logger.entry( ops );
     logger.debug( "Updating operation log..." );
     /*
@@ -279,6 +283,69 @@ public class OperationMgr implements IOperationMgr {
   }
 
   /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.operation.IOperationMgr#purgeLog(java.lang.Integer)
+   */
+  @Override
+  public synchronized boolean purgeLog(int groupSize) {
+    logger.entry( groupSize );
+    logger.debug( "Purging operation log..." );
+    /*
+     * 1) For each summary of acks
+     * 1.1) For each operation in the summary
+     * 1.1.1) If its timestamp is older than the one saved in the temporary summary vector
+     *        containing oldest timestamps --> we save it
+     * 2) For each timestamp in the temporary summary vector
+     * 2.1) Remove from log all operations timestamped before that, belonging to the same node
+     * 3) Return true if done successfully
+     */
+    //
+    // Attention: You can only purge the log effectively once it has entered the stable phase,
+    // when all nodes are aware of the operations seen by other nodes. In practice this means
+    // that only when the acknowledgement vector contains the summary vectors of all other nodes in the group (summarizedNodes.size == groupSize)
+    // we can effectively purge. And you can only purge the operations seen by all nodes (votes == groupSize)
+    //
+
+    boolean done = true;
+
+    Set<String> summarizedNodes = ackSummary.summarizedNodes();
+
+    if (summarizedNodes.size() == groupSize) {
+      HashMap<String, Integer> votesMap = new HashMap<String, Integer>();
+      Summary allSeenSummary = new Summary();
+
+      for (String ackNodeId : summarizedNodes) {
+        Summary nodeSummary = ackSummary.get( ackNodeId );
+
+        for (String nodeId : summarizedNodes) {
+          Timestamp nodeLastTS = nodeSummary.getLast( nodeId );
+
+          if (nodeLastTS != null) {
+            int votes = votesMap.containsKey( nodeId ) ? votesMap.get( nodeId ) : 0;
+            votesMap.put( nodeId, votes + 1 );
+
+            Timestamp allSeenTS = allSeenSummary.getLast( nodeId );
+
+            if (allSeenTS == null || nodeLastTS.compare(allSeenTS) < 0) {
+              allSeenSummary.put( nodeId, nodeLastTS );
+            }
+          }
+        }
+      }
+
+      for (String nodeId : allSeenSummary.summarizedNodes()) {
+        int votes = votesMap.get( nodeId );
+
+        if (votes == groupSize) {
+          Timestamp allSeenTS = allSeenSummary.getLast( nodeId );
+          log.removeAllPreceding( nodeId, allSeenTS );
+        }
+      }
+    }
+
+    return logger.exit( done );
+  }
+
+  /* (non-Javadoc)
    * @see org.coderebels.tsaenode.core.operation.IOperationMgr#getAcks()
    */
   @Override
@@ -295,7 +362,7 @@ public class OperationMgr implements IOperationMgr {
    * @see org.coderebels.tsaenode.core.operation.IOperationMgr#updateAcks(java.util.concurrent.ConcurrentHashMap)
    */
   @Override
-  public boolean updateAcks(ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> acks) {
+  public synchronized boolean updateAcks(ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> acks) {
     logger.entry( acks );
     logger.debug( "Updating acknowledgement vector..." );
 

@@ -41,6 +41,7 @@ import org.coderebels.tsaenode.core.file.FileMgr;
 import org.coderebels.tsaenode.core.operation.Operation;
 import org.coderebels.tsaenode.core.operation.IOperationMgr;
 import org.coderebels.tsaenode.core.operation.OperationMgr;
+import org.coderebels.tsaenode.core.sync.Peer;
 import org.coderebels.tsaenode.core.sync.ISyncMgr;
 import org.coderebels.tsaenode.core.sync.TSAESyncMgr;
 
@@ -103,6 +104,34 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
   }
 
   /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.INode#disconnect()
+   */
+  public boolean disconnect() throws RemoteException {
+    logger.entry();
+    logger.info( "Disconnecting..." );
+
+    boolean done = leaveGroup();
+
+    return logger.exit( done );
+  }
+
+  /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.INode#requestProfile()
+   */
+  public Peer requestProfile() throws RemoteException {
+    logger.entry();
+    logger.info( "Serving request for node profile..." );
+
+    Peer profile = new Peer();
+    profile.setId( nodeId );
+    profile.setIP( nodeIP );
+    profile.setPort( Integer.parseInt(nodePort) );
+    profile.setRmiPort( Integer.parseInt(rmiPort) );
+
+    return logger.exit( profile );
+  }
+
+  /* (non-Javadoc)
    * @see org.coderebels.tsaenode.core.INode#add(java.lang.String)
    */
   @Override
@@ -129,10 +158,10 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
   }
 
   /* (non-Javadoc)
-   * @see org.coderebels.tsaenode.core.INode#getIndex()
+   * @see org.coderebels.tsaenode.core.INode#requestFileIndex()
    */
   @Override
-  public List<FileData> getIndex() throws RemoteException {
+  public List<FileData> requestFileIndex() throws RemoteException {
     logger.entry();
     logger.info( "Serving request for file index..." );
     /*
@@ -144,10 +173,10 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
   }
 
   /* (non-Javadoc)
-   * @see org.coderebels.tsaenode.core.INode#getOperationLog()
+   * @see org.coderebels.tsaenode.core.INode#requestLog()
    */
   @Override
-  public List<Operation> getOperationLog() throws RemoteException {
+  public List<Operation> requestLog() throws RemoteException {
     logger.entry();
     logger.info( "Serving request for operation log..." );
     /*
@@ -156,6 +185,37 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
     List<Operation> ops = operationMgr.getLog();
 
     return logger.exit( ops );
+  }
+
+  /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.INode#requestSummary()
+   */
+  @Override
+  public ConcurrentHashMap<String, Timestamp> requestSummary() throws RemoteException {
+    logger.entry();
+    logger.info( "Serving request for summary vector..." );
+    /*
+     * 1) Delegate call to OperationMgr through its interface --> IOperationMgr#getSummary
+     */
+    ConcurrentHashMap<String, Timestamp> summary = operationMgr.getSummary();
+
+    return logger.exit( summary );
+  }
+
+  /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.INode#requestAckSummary()
+   */
+  @Override
+  public ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> requestAckSummary()
+    throws RemoteException {
+    logger.entry();
+    logger.info( "Serving request for acknowledgement vector..." );
+    /*
+     * 1) Delegate call to OperationMgr through its interface --> IOperationMgr#getAcks
+     */
+    ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> ackSummary = operationMgr.getAcks();
+
+    return logger.exit( ackSummary );
   }
 
   /* (non-Javadoc)
@@ -202,37 +262,6 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
     return logger.exit( opsToSend );
   }
 
-  /* (non-Javadoc)
-   * @see org.coderebels.tsaenode.core.INode#requestSummaryTSAESession()
-   */
-  @Override
-  public ConcurrentHashMap<String, Timestamp> requestSummaryTSAESession() throws RemoteException {
-    logger.entry();
-    logger.info( "Serving request for summary vector..." );
-    /*
-     * 1) Delegate call to OperationMgr through its interface --> IOperationMgr#getSummary
-     */
-    ConcurrentHashMap<String, Timestamp> summary = operationMgr.getSummary();
-
-    return logger.exit( summary );
-  }
-
-  /* (non-Javadoc)
-   * @see org.coderebels.tsaenode.core.INode#requestAckTSAESession()
-   */
-  @Override
-  public ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> requestAckTSAESession()
-    throws RemoteException {
-    logger.entry();
-    logger.info( "Serving request for acknowledgement vector..." );
-    /*
-     * 1) Delegate call to OperationMgr through its interface --> IOperationMgr#getAcks
-     */
-    ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> ackSummary = operationMgr.getAcks();
-
-    return logger.exit( ackSummary );
-  }
-
 
   /**
    * Joins the group of nodes
@@ -245,6 +274,25 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
 
     try {
       Naming.rebind( String.format("//%s:%s/node%s", nodeIP, rmiPort, nodePort), this );
+    } catch (Exception e) {
+      logger.catching( e );
+      done = false;
+    }
+
+    return logger.exit( done );
+  }
+
+  /**
+   * Leaves the group of nodes
+   * @return true if done successfully; false otherwise
+   */
+  private boolean leaveGroup() {
+    logger.entry();
+
+    boolean done = true;
+
+    try {
+      Naming.unbind( String.format("//%s:%s/node%s", nodeIP, rmiPort, nodePort) );
     } catch (Exception e) {
       logger.catching( e );
       done = false;
