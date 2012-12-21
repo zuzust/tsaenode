@@ -24,6 +24,8 @@ import java.rmi.Naming;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -55,6 +57,9 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
 
   private final Object lock = new Object();
 
+  private Timer scheduler;
+  private long syncFreq;
+
   private String nodeId;
   private String nodeIP;
   private String nodePort;
@@ -70,6 +75,8 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
     super();
 
     Config conf = ConfigFactory.load();
+
+    syncFreq = conf.getMilliseconds( "syncFreq" );
 
     nodeIP   = InetAddress.getLocalHost().getHostAddress();
     nodePort = conf.getString( "nodePort" );
@@ -99,6 +106,7 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
 
     boolean done = joinGroup();
     done = done && setUp();
+    done = done && scheduleSyncSession();
 
     return logger.exit( done );
   }
@@ -110,7 +118,8 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
     logger.entry();
     logger.info( "Disconnecting..." );
 
-    boolean done = leaveGroup();
+    boolean done = cancelSyncSession();
+    done = done && leaveGroup();
 
     return logger.exit( done );
   }
@@ -327,6 +336,43 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
   }
 
   /**
+   * Schedules synchronization sessions
+   * @return true if done successfully; false otherwise
+   */
+  private boolean scheduleSyncSession() {
+    logger.entry();
+    logger.debug( "Scheduling synchronization session..." );
+
+    boolean done = true;
+
+    try {
+      TSAEsession syncSession = new TSAEsession( this );
+      long syncDelay = 0;
+
+      scheduler = new Timer();
+      scheduler.scheduleAtFixedRate( syncSession, syncDelay, syncFreq );
+    } catch (Exception e) {
+      logger.catching( e );
+      done = false;
+    }
+
+    return logger.exit( done );
+  }
+
+  /**
+   * Schedules synchronization sessions
+   * @return true if done successfully; false otherwise
+   */
+  private boolean cancelSyncSession() {
+    logger.entry();
+    logger.debug( "Cancelling synchronization session..." );
+
+    scheduler.cancel();
+
+    return logger.exit( true );
+  }
+
+  /**
    * Applies operation of specified type to supplied file
    * @param type Type of operation
    * @param file File the operation will apply to
@@ -356,6 +402,28 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
     }
 
     return logger.exit( done );
+  }
+
+
+  private class TSAEsession extends TimerTask {
+
+    private INode node;
+
+    public TSAEsession(INode node) {
+      super();
+      this.node = node;
+    }
+
+    /* (non-Javadoc)
+    * @see java.util.TimerTask#run()
+    */
+    @Override
+    public void run() {
+      try {
+        node.startTSAESession();
+      } catch (Exception e) {}
+    }
+
   }
 
 }

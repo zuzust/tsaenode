@@ -2,7 +2,7 @@
 =================================
 Acknowledgement vector: [NodeId --> SeqNumber]
 ---------------------------------
-#set( $nodes = $ackSummary.keys() )
+#set( $nodes = $ackSummary.keySet() )
 #foreach( $node in $nodes )
 
 $node

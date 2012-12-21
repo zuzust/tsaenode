@@ -23,7 +23,7 @@ import java.io.StringWriter;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -33,9 +33,6 @@ import org.apache.velocity.app.Velocity;
 
 import org.coderebels.tsaenode.core.INode;
 import org.coderebels.tsaenode.core.TSAEnode;
-import org.coderebels.tsaenode.core.common.Timestamp;
-import org.coderebels.tsaenode.core.file.FileData;
-import org.coderebels.tsaenode.core.operation.Operation;
 import org.coderebels.tsaenode.core.sync.Peer;
 
 
@@ -72,7 +69,7 @@ public class Main {
     // Read, Evaluate and Print
     repl( node );
 
-    // Unegister Node and Exit
+    // Unregister Node and Exit
     unregisterNode( node );
   }
   
@@ -155,7 +152,13 @@ public class Main {
   }
 
   private int readAction() throws Exception {
-    return Integer.parseInt( read() );
+    int action = -1;
+
+    try {
+      action = Integer.parseInt( read() );
+    } catch (Exception e) {}
+
+    return action;
   }
 
   private String read() throws Exception {
@@ -196,7 +199,10 @@ public class Main {
       case 7: runSyncSession( node );
         break;
 
-      default: exit = true;
+      case 8: exit = true;
+        break;
+
+      default: System.out.println( "Unknown action. Try again." );
         break;
     }
 
@@ -236,7 +242,7 @@ public class Main {
   }
 
   private void showFileIndex(INode node) throws Exception {
-    List<FileData> files = node.requestFileIndex();
+    List files = node.requestFileIndex();
 
     VelocityContext context = new VelocityContext();
     context.put( "files", files );
@@ -246,7 +252,7 @@ public class Main {
   }
 
   private void showLog(INode node) throws Exception {
-    List<Operation> ops = node.requestLog();
+    List ops = node.requestLog();
 
     VelocityContext context = new VelocityContext();
     context.put( "ops", ops );
@@ -256,7 +262,7 @@ public class Main {
   }
 
   private void showSummary(INode node) throws Exception {
-    ConcurrentHashMap<String, Timestamp> summary = node.requestSummary();
+    Map summary = node.requestSummary();
 
     VelocityContext context = new VelocityContext();
     context.put( "summary", summary );
@@ -266,7 +272,7 @@ public class Main {
   }
 
   private void showAckSummary(INode node) throws Exception {
-    ConcurrentHashMap<String, ConcurrentHashMap<String, Timestamp>> ackSummary = node.requestAckSummary();
+    Map ackSummary = node.requestAckSummary();
 
     VelocityContext context = new VelocityContext();
     context.put( "ackSummary", ackSummary );
