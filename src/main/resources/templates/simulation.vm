@@ -1,0 +1,9 @@
+
+=================================
+Simulation stats:
+---------------------------------
+Connections:     $simulation.connections
+Disconnections:  $simulation.disconnections
+Added Files:     $simulation.addedFiles
+Removed Files:   $simulation.removedFiles
+=================================

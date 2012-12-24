@@ -4,6 +4,15 @@ TSAEnode
 Share your files in a pure P2P distributed network.  
 Time-Stamped Anti-Entropy protocol is used for eventual message delivery.
 
+
+Contact
+-------
+
+By Email:   carles.ml.dev at gmail dot com  
+On Twitter: [@zuzudev](https://twitter.com/zuzudev)  
+On Google+: [Carles Muiños](https://plus.google.com/109480759201585988691)
+
+
 License
 -------
 

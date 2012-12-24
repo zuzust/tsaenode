@@ -48,6 +48,13 @@ public interface INode extends Remote {
   public boolean disconnect() throws RemoteException;
 
   /**
+   * Checks if node is still joinning the group
+   * @return true if node is connected; false otherwise
+   * @throws java.rmi.RemoteException
+   */
+  public boolean isConnected() throws RemoteException;
+
+  /**
    * Gets node profile (id, ip, port, ...)
    * @return Node profile encapsulation
    * @throws java.rmi.RemoteException

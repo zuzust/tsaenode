@@ -24,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -59,7 +60,13 @@ public class Main {
   }
 
 
-  public Main() {}
+  private Timer scheduler;
+  private Simulation simulation;
+
+
+  public Main() {
+    scheduler = new Timer();
+  }
 
 
   public void start() {
@@ -114,7 +121,7 @@ public class Main {
 
   private void repl(INode node) {
     boolean exit = false;
-    int action = 0;
+    int action = -1;
 
     try {
       StringWriter writer = prepareOptions();
@@ -199,7 +206,15 @@ public class Main {
       case 7: runSyncSession( node );
         break;
 
-      case 8: exit = true;
+      case 8: runSimulation( node );
+        break;
+
+      case 9: stopSimulation( node );
+        break;
+
+      case 10:
+        scheduler.cancel();
+        exit = true;
         break;
 
       default: System.out.println( "Unknown action. Try again." );
@@ -214,7 +229,7 @@ public class Main {
 
     VelocityContext context = new VelocityContext();
     context.put( "profile", profile );
-    StringWriter writer = prepareTemplate( "peer.vm", context );
+    StringWriter writer = prepareTemplate( "profile.vm", context );
 
     System.out.println( writer.toString() );
   }
@@ -288,6 +303,37 @@ public class Main {
       System.out.println( "Synchronization run succesfully." );
     } else {
       System.out.println( "An error occurred while running synchronization session." );
+    }
+  }
+
+  private void runSimulation(INode node) throws Exception {
+    if (simulation == null) {
+      simulation = new Simulation( node );
+      long delay  = 0;
+      long period = 10000;
+   
+      scheduler.scheduleAtFixedRate( simulation, delay, period );
+
+      System.out.println( "Starting simulation..." );
+    } else {
+      System.out.println( "Simulation is already running." );
+    }
+  }
+
+  private void stopSimulation(INode node) throws Exception {
+    if (simulation != null) {
+      scheduler.cancel();
+
+      VelocityContext context = new VelocityContext();
+      context.put( "simulation", simulation );
+      StringWriter writer = prepareTemplate( "simulation.vm", context );
+
+      System.out.println( writer.toString() );
+
+      simulation = null;
+      if (!node.isConnected()) node.connect();
+    } else {
+      System.out.println( "No simulation running at the moment." );
     }
   }
 

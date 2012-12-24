@@ -2,13 +2,15 @@
 *********************************
 Select an action:
 
-0: Show node profile
-1: Add a file
-2: Remove a file
-3: Show the index of shared files
-4: Show the operation log
-5: Show the summary vector
-6: Show the acknowledgement vector
-7: Run synchronization session
-8: Exit
+ 0: Show node profile
+ 1: Add a file
+ 2: Remove a file
+ 3: Show file index
+ 4: Show operation log
+ 5: Show summary vector
+ 6: Show acknowledgement vector
+ 7: Run synchronization session
+ 8: Run simulation
+ 9: Stop simulation
+10: Exit
 *********************************

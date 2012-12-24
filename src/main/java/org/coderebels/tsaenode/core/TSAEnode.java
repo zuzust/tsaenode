@@ -58,13 +58,14 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
   private final Object lock = new Object();
 
   private Timer scheduler;
-  private long syncFreq;
 
   private String nodeId;
   private String nodeIP;
   private String nodePort;
   private String rmiPort;
   private String pubFolderPath;
+  private long syncFreq;
+  private boolean connected;
 
   private IFileMgr fileMgr;
   private IOperationMgr operationMgr;
@@ -76,13 +77,13 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
 
     Config conf = ConfigFactory.load();
 
-    syncFreq = conf.getMilliseconds( "syncFreq" );
-
     nodeIP   = InetAddress.getLocalHost().getHostAddress();
     nodePort = conf.getString( "nodePort" );
     nodeId   = String.format( "%s:%s", nodeIP, nodePort );
     rmiPort  = conf.getString( "rmiPort" );
     pubFolderPath = conf.getString( "pubFolderPath" );
+    syncFreq = conf.getMilliseconds( "syncFreq" );
+    connected = false;
 
     String pubFolderURI  = String.format( "http://%s/tsaenode/%s", nodeIP, nodePort );
 
@@ -108,6 +109,8 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
     done = done && setUp();
     done = done && scheduleSyncSession();
 
+    if (done) connected = true;
+
     return logger.exit( done );
   }
 
@@ -121,7 +124,16 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
     boolean done = cancelSyncSession();
     done = done && leaveGroup();
 
+    if (done) connected = false;
+
     return logger.exit( done );
+  }
+
+  /* (non-Javadoc)
+   * @see org.coderebels.tsaenode.core.INode#isConnected()
+   */
+  public boolean isConnected() throws RemoteException {
+    return connected;
   }
 
   /* (non-Javadoc)
@@ -347,7 +359,7 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
 
     try {
       TSAEsession syncSession = new TSAEsession( this );
-      long syncDelay = 0;
+      long syncDelay = 60000;
 
       scheduler = new Timer();
       scheduler.scheduleAtFixedRate( syncSession, syncDelay, syncFreq );
@@ -360,7 +372,7 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
   }
 
   /**
-   * Schedules synchronization sessions
+   * Cancels synchronization sessions
    * @return true if done successfully; false otherwise
    */
   private boolean cancelSyncSession() {
