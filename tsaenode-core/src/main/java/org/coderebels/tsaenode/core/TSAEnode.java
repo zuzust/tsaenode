@@ -359,7 +359,7 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
 
     try {
       TSAEsession syncSession = new TSAEsession( this );
-      long syncDelay = 60000;
+      long syncDelay = 0;
 
       scheduler = new Timer();
       scheduler.scheduleAtFixedRate( syncSession, syncDelay, syncFreq );

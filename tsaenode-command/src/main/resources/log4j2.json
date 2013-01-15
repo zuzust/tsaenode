@@ -2,7 +2,7 @@
   "configuration": {
     "status": "off",
     "properties": {
-      "property": { "name": "filename", "value": "target/trace.log" }
+      "property": { "name": "filename", "value": "trace.log" }
     },
     "appenders": {
       "Console": {
