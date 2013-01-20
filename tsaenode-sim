@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+# vim:ft=sh
+# File: $TSAENODE_HOME/tsaenode-sim
+
+
+version=1.0
+
+codebase=${TSAENODE_HOME:-$PWD}/tsaenode-${version}.jar
+config=${TSAENODE_HOME:-$PWD}/tsaenode-sim.conf
+
+rmiPort=1099
+groupPorts=(2010 2011 2012 2013)
+
+
+echo "Starting Java RMI registry at port ${rmiPort}..."
+gnome-terminal  -t "Java RMI registry at port ${rmiPort}" \
+                -x rmiregistry ${rmiPort}
+
+
+for nodePort in "${groupPorts[@]}"
+do
+  echo "Starting TSAEnode at port ${nodePort}..."
+  gnome-terminal  -t "TSAEnode ${nodePort}" \
+                  -x java -cp ${codebase} \
+                          -Djava.rmi.server.codebase=file://${codebase} \
+                          -Dconfig.file=${config} \
+                          -DrmiPort=${rmiPort} \
+                          -DnodePort=${nodePort} \
+                          org.coderebels.tsaenode.Main
+done
+
+
+unset nodePort groupPorts rmiPort config codebase version
+exit 0
