@@ -37,4 +37,8 @@
       <artifactId>jackson-mapper-asl</artifactId>
     </dependency>
   </dependencies>
+  
+  <build>
+    <finalName>tsaenode-core</finalName>
+  </build>
 </project>
