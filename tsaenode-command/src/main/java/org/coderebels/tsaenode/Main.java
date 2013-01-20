@@ -46,16 +46,6 @@ public class Main {
 
   
   public static void main(String[] args) {
-
-    // Read the Node Port from the command line (if none supplied, use 2010)
-    String nodePort = "2010";
-    try {
-      nodePort = args[0];
-    } catch (Exception e) {}
-
-    System.setProperty( "nodePort", nodePort );
-
-    // Start the program
     new Main().start();
   }
 

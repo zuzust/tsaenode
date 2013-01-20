@@ -29,10 +29,6 @@ import org.coderebels.tsaenode.core.common.Timestamp;
 class FileDataFactory {
 
   private static Logger logger = LogManager.getLogger( FileDataFactory.class.getName() );
-  /**
-   * Creation sequence number of local node
-   */
-  private static int seqNumber = 0;
 
 
   /**
@@ -47,9 +43,7 @@ class FileDataFactory {
 
     Timestamp timestamp = new Timestamp();
     timestamp.setNodeId( nodeId );
-    timestamp.setSeqNumber( seqNumber );
-
-    seqNumber++;
+    timestamp.setSeqNumber( System.currentTimeMillis() );
 
     FileData fd = new FileData();
     fd.setOwner( nodeId );

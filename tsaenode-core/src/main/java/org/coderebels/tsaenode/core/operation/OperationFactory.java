@@ -30,10 +30,6 @@ import org.coderebels.tsaenode.core.common.Timestamp;
 public class OperationFactory {
 
   private static Logger logger = LogManager.getLogger( OperationFactory.class.getName() );
-  /**
-   * Creation sequence number of local node
-   */
-  private static int seqNumber = 0;
 
 
   /**
@@ -49,9 +45,7 @@ public class OperationFactory {
 
     Timestamp timestamp = new Timestamp();
     timestamp.setNodeId( nodeId );
-    timestamp.setSeqNumber( seqNumber );
-
-    seqNumber++;
+    timestamp.setSeqNumber( System.currentTimeMillis() );
 
     Operation op = new Operation();
     op.setType( type );

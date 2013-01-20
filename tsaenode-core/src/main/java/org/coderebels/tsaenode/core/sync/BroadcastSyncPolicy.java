@@ -49,16 +49,18 @@ public class BroadcastSyncPolicy implements ISyncPolicy {
      */
     List<Peer> syncNodes = new Vector<Peer>();
 
-    boolean connected = false;
-    boolean synchronizing = false;
+    if (!nodes.isEmpty()) {
+      boolean connected = false;
+      boolean synchronizing = false;
 
-    for (Peer node : nodes) {
-      connected = node.isConnected();
-      synchronizing = !syncMap.isAvailable( node );
+      for (Peer node : nodes) {
+        connected = node.isConnected();
+        synchronizing = !syncMap.isAvailable( node );
 
-      if (connected && !synchronizing) {
-        syncMap.setUnavailable( node );
-        syncNodes.add( node );
+        if (connected && !synchronizing) {
+          syncMap.setUnavailable( node );
+          syncNodes.add( node );
+        }
       }
     }
 

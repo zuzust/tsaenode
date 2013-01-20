@@ -85,7 +85,7 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
     syncFreq = conf.getMilliseconds( "syncFreq" );
     connected = false;
 
-    String pubFolderURI  = String.format( "http://%s/tsaenode/%s", nodeIP, nodePort );
+    String pubFolderURI  = String.format( "http://%s/public/%s", nodeIP, nodePort );
 
     System.setProperty( "nodeId", nodeId );
     System.setProperty( "nodeIP", nodeIP );

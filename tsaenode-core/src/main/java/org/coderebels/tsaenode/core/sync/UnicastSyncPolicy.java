@@ -50,29 +50,31 @@ public class UnicastSyncPolicy implements ISyncPolicy {
      */
     List<Peer> syncNodes = new Vector<Peer>();
 
-    boolean connected = false;
-    boolean synchronizing = true;
+    if (!nodes.isEmpty()) {
+      boolean connected = false;
+      boolean synchronizing = true;
 
-    int idx = 0;
-    int n = nodes.size();
-    int numSyncNodes = (int) Math.round( (Math.log(n) / Math.log(2)) + 1 );
-    int attempts = (int) Math.floor( numSyncNodes * 1.5 );
+      int idx = 0;
+      int n = nodes.size();
+      int numSyncNodes = (int) Math.round( (Math.log(n) / Math.log(2)) + 1 );
+      int attempts = (int) Math.floor( numSyncNodes * 1.5 );
 
-    Peer node = null;
-    Random rnd = new Random();
+      Peer node = null;
+      Random rnd = new Random();
 
-    do {
-      idx = rnd.nextInt( n );
-      node = nodes.get( idx );
+      do {
+        idx = rnd.nextInt( n );
+        node = nodes.get( idx );
 
-      connected = node.isConnected();
-      synchronizing = !syncMap.isAvailable( node );
+        connected = node.isConnected();
+        synchronizing = !syncMap.isAvailable( node );
 
-      attempts--;
-    } while ((!connected || synchronizing) && attempts > 0);
+        attempts--;
+      } while ((!connected || synchronizing) && attempts > 0);
 
-    syncMap.setUnavailable( node );
-    syncNodes.add( node );
+      syncMap.setUnavailable( node );
+      syncNodes.add( node );
+    }
 
     return logger.exit( syncNodes );
   }
