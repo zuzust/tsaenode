@@ -105,11 +105,15 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
     logger.entry();
     logger.info( "Connecting..." );
 
-    boolean done = joinGroup();
-    done = done && setUp();
-    done = done && scheduleSyncSession();
+    boolean done = true;
 
-    if (done) connected = true;
+    if (!connected) {
+      done = joinGroup();
+      done = done && setUp();
+      done = done && scheduleSyncSession();
+
+      if (done) connected = true;
+    }
 
     return logger.exit( done );
   }
@@ -121,10 +125,14 @@ public class TSAEnode extends UnicastRemoteObject implements INode {
     logger.entry();
     logger.info( "Disconnecting..." );
 
-    boolean done = cancelSyncSession();
-    done = done && leaveGroup();
+    boolean done = true;
 
-    if (done) connected = false;
+    if (connected) {
+      done = cancelSyncSession();
+      done = done && leaveGroup();
+
+      if (done) connected = false;
+    }
 
     return logger.exit( done );
   }
