@@ -1,20 +1,48 @@
-TSAEnode
-========
+# TSAEnode
 
 Share your files in a pure P2P distributed network.  
 Time-Stamped Anti-Entropy protocol is used for eventual message delivery.
 
 
-Contact
--------
+## Requirements
+
+You will need:
+
+* JDK 1.5 or greater
+* Maven 3 or greater
+
+
+## Installation
+
+The following instructions refer to UNIX-like platforms only.
+
+Download the zipped master branch and unzip:
+
+    $ wget https://github.com/zuzust/tsaenode/archive/master.zip
+    $ unzip master.zip
+
+Change directory to _tsaenode-master_ folder:
+
+    $ cd tsaenode-master
+
+Set the installation directory in _install.sh_ file (defaults to _${HOME}/Applications/tsaenode_)
+and execute the installation script:
+
+    $ ./install.sh
+
+Finally source your _.bashrc_ file for the environment variables to take effect:
+
+    $ . ~/.bashrc
+
+
+## Contact
 
 By Email:   carles.ml.dev at gmail dot com  
 On Twitter: [@zuzudev](https://twitter.com/zuzudev)  
 On Google+: [Carles Muiños](https://plus.google.com/109480759201585988691)
 
 
-License
--------
+## License
 
 Copyright (C) 2012 Carles Muiños
 
