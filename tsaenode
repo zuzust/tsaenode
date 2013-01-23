@@ -16,7 +16,7 @@ print_usage() {
   printf "Usage: tsaenode [-options]\n"
   printf "where options include:\n"
   printf "\t-h\t\tprint this help message\n"
-  printf "\t-f\t\tconfig file path\n"
+  printf "\t-f <config>\tconfig file path\n"
   printf "\t-r <port>\tset Java RMI registry port\n"
 }
 
