@@ -6,7 +6,22 @@ Time-Stamped Anti-Entropy protocol is used for eventual message delivery.
 
 ## About
 
-TODO
+A few days ago, I read a post on Stack Overflow where a group of people who love sunsets asked for a program to share photos of the sunsets from where they live. They all live in different cities around the world and need a program that allow each member of the group: a) publish and share their photographs, b) be aware of the list of photos published by other members, and c) download the photos of their interest.
+
+They all pointed out the fact that the photos should always be in the owner's machine, not in the Cloud. And they all wanted to be aware of the list of photos published by the group. Equally, they did not care if any of them were not accessible for a while because the person who posted it was not connected at the time.
+
+_TSAEnode_ aims to be a possible answer to the preceding fake scenario.
+
+_TSAEnode_ is yet another P2P client for a distributed network with the following features:
+
+* No machine will perform system coordination role.
+* Group members will publish their photos using a local web interface. Internally, published photos will be saved in a public directory of the owner machine, accessible to the members of the group from the Internet.
+* From time to time, each node will perform scheduled synchronization sessions with other nodes in the group, in order to be aware of newly published photos and their locations. This process will eventually end with all nodes sharing the same list of published photos, no matter when or how long they have been connected or disconnected.
+* Each node will have its own list of published photos, built from the synchronization sessions described before.
+* No matter the delays in knowing existence of newly published photos.
+* Members willing to get published photos, will download them from the owning node where they are located. If the node is not available at that moment, they should try later on.
+
+Read the [Wiki](https://github.com/zuzust/tsaenode/wiki) for further information on node operation.
 
 
 ## Requirements
@@ -75,7 +90,7 @@ In both operating modes, you are given the same REPL to interact with nodes:
     10: Exit
     *********************************
 
-Read the [Wiki](https://github.com/zuzust/tsaenode/wiki) for more information on node operation and TSAE data structures.
+Read the [Wiki](https://github.com/zuzust/tsaenode/wiki) for more information on TSAE data structures.
 
 
 ## Configuration
