@@ -91,4 +91,24 @@ public class LogTest extends BaseTestCase {
     assertThat( "should contain operation", data.get(nodeId).get(seqNumber), equalTo(op) );
   }
 
+  /**
+   * Test for the {@link org.coderebels.tsaenode.core.operation.Log#removeAllPreceding(java.lang.String, org.coderebels.tsaenode.core.common.Timestamp)} method.
+   */
+  @Test public void testRemoveAllPreceding() {
+    theLog.add(op);
+
+    Timestamp ts = op.getTimestamp();
+    String nodeId  = ts.getNodeId();
+    long seqNumber = ts.getSeqNumber();
+
+    Timestamp lastSeen = new Timestamp();
+    lastSeen.setNodeId( nodeId );
+    lastSeen.setSeqNumber( seqNumber + 1 );
+
+    theLog.removeAllPreceding( nodeId, lastSeen );    
+    ConcurrentHashMap<String, ConcurrentSkipListMap<Long, Operation>> data = getInternalState( theLog, "data" );
+
+    assertThat( "should be empty", data.get(nodeId).isEmpty(), is(true) );
+  }
+
 }

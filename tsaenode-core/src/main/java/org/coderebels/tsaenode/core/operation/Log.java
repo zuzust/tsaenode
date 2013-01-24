@@ -139,11 +139,10 @@ public class Log {
     ConcurrentSkipListMap<Long, Operation> nodeOps = data.get( nodeId );
 
     if (nodeOps != null && !nodeOps.isEmpty()) {
-      long seqNum = nodeOps.firstKey();
+      ConcurrentNavigableMap<Long, Operation> preceding = nodeOps.headMap( lastSeen.getSeqNumber(), true );
 
-      while (!nodeOps.isEmpty() && seqNum <= lastSeen.getSeqNumber()) {
+      for (Long seqNum : preceding.keySet()) {
         nodeOps.remove( seqNum );
-        seqNum++;
       }
     }
   }
