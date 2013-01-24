@@ -54,9 +54,7 @@ public class Main {
   private Simulation simulation;
 
 
-  public Main() {
-    scheduler = new Timer();
-  }
+  public Main() {}
 
 
   public void start() {
@@ -203,7 +201,7 @@ public class Main {
         break;
 
       case 10:
-        scheduler.cancel();
+        if (scheduler != null) scheduler.cancel();
         exit = true;
         break;
 
@@ -301,7 +299,8 @@ public class Main {
       simulation = new Simulation( node );
       long delay  = 0;
       long period = 10000;
-   
+
+      scheduler = new Timer();   
       scheduler.scheduleAtFixedRate( simulation, delay, period );
 
       System.out.println( "Starting simulation..." );
@@ -320,6 +319,7 @@ public class Main {
 
       System.out.println( writer.toString() );
 
+      scheduler  = null;
       simulation = null;
       if (!node.isConnected()) node.connect();
     } else {
