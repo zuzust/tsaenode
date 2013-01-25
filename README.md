@@ -6,7 +6,7 @@ Time-Stamped Anti-Entropy protocol is used for eventual message delivery.
 
 ## About
 
-A few days ago, I read a post on Stack Overflow where a group of people asked for a program to share photos of the sunsets from their home cities around the world. They all needed a program that allow each member of the group: a) publish and share their photos, b) be aware of the list of photos published by other members, and c) download the photos of their interest.
+A few days ago, I read a post on Stack Overflow where a group of people asked for a program to share photos of the sunsets from their home cities around the world. They all needed a program that allowed each member of the group: a) publish and share their photos, b) be aware of the list of photos published by other members, and c) download the photos of their interest.
 
 They all pointed out the fact that the photos should always be in the owner's machine, not in the Cloud, not being an issue if any of them were not accessible for a while because the member who posted it was not connected at the time.
 
