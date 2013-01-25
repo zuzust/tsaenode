@@ -80,13 +80,13 @@ public class FileIndexTest extends BaseTestCase {
    * when file is not indexed yet.
    */
   @Test public void testAdd_fileNotIndexedYet() {
-    String filename = fd.getFilename();
-    doReturn(null).when(theFileIndex).search(filename);
+    String filePath = fd.getPath();
+    doReturn(null).when(theFileIndex).search(filePath);
 
     theFileIndex.add( fd );
 
     InOrder inOrder = inOrder( theFileIndex, data );
-    inOrder.verify(theFileIndex).search(filename);
+    inOrder.verify(theFileIndex).search(filePath);
     inOrder.verify(data, never()).remove(fd);
     inOrder.verify(data).add(fd);
 
@@ -98,14 +98,14 @@ public class FileIndexTest extends BaseTestCase {
    * when file is already indexed.
    */
   @Test public void testAdd_fileAlreadyIndexed() {
-    String filename = fd.getFilename();
-    doReturn(fd).when(theFileIndex).search(filename);
+    String filePath = fd.getPath();
+    doReturn(fd).when(theFileIndex).search(filePath);
     doReturn(true).when(data).remove(fd);
 
     theFileIndex.add( fd );
 
     InOrder inOrder = inOrder( theFileIndex, data );
-    inOrder.verify(theFileIndex).search(filename);
+    inOrder.verify(theFileIndex).search(filePath);
     inOrder.verify(data).remove(fd);
     inOrder.verify(data).add(fd);
 
@@ -119,7 +119,7 @@ public class FileIndexTest extends BaseTestCase {
   @Test public void testSearch_fileIsPresent() {
     theFileIndex.add( fd );
 
-    FileData fdd = theFileIndex.search( fd.getFilename() );
+    FileData fdd = theFileIndex.search( fd.getPath() );
 
     assertThat( "FileIndex search should return file", fdd, equalTo(fd) );
   }

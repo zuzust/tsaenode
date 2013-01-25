@@ -180,7 +180,7 @@ public class FileMgrTest extends BaseTestCase {
     doReturn(true).when(theFileMgr, "doAddFile", flocal);
     theFileMgr.addFile( flocal );
 
-    FileData fd = theFileMgr.searchFileData( flocal.getFilename() );
+    FileData fd = theFileMgr.searchFileData( flocal.getPath() );
 
     assertThat( "FileData should be found", fd, is(equalTo(flocal)) );
   }

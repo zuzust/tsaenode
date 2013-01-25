@@ -93,7 +93,7 @@ public class FileMgr implements IFileMgr {
      * 1) Search for file in FileIndex and return the corresponding FileData
      *    or null if not found
      */
-    FileData fd = fileIndex.search( basename(file) );
+    FileData fd = fileIndex.search( file );
 
     return logger.exit( fd );
   }

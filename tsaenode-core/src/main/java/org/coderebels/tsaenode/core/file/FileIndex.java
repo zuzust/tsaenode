@@ -61,7 +61,7 @@ public class FileIndex {
     // Atention: indexOf(file) would return the zero-based index if file.equals(previous)
     // but this will never happen, as their timestamp will always be different --> file.timestamp > previous.timestamp
     //
-    FileData previous = search( file.getFilename() );
+    FileData previous = search( file.getPath() );
 
     if (previous != null) {
       data.remove( previous );
@@ -87,15 +87,15 @@ public class FileIndex {
 
   /**
    * Returns the matching file from the index
-   * @param filename Name of the file to search
+   * @param filePath Path of the file to search
    * @return FileData associated to file; null otherwise
    */
-  public FileData search(String filename) {
-    logger.entry( filename );
+  public FileData search(String filePath) {
+    logger.entry( filePath );
     logger.debug( "Searching file in Index..." );
 
     for (FileData fd : data) {
-      if (fd.getFilename().equals(filename)) {
+      if (fd.getPath().equals(filePath)) {
         return logger.exit( fd );
       }
     }
